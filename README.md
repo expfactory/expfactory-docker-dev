@@ -40,7 +40,7 @@ To stop the server:
 ### Restarting the server
 After making changes to the code you need to restart the server (but just the uwsgi component):
 
-      docker-compose restart nginx uwsgi
+      docker-compose restart uwsgi worker nginx
 
 ### Reseting the server
 If you would like to reset the server and clean the database:
@@ -79,15 +79,7 @@ Any change to the python code needs to update the docker image, which could be a
 ## Getting Started
 Before bringing up your container, you must create a file `secrets.py` in the expdj folder with the following:
 
-TURK = {
-    'host': 'mechanicalturk.amazonaws.com',
-    'sandbox_host':'mechanicalturk.sandbox.amazonaws.com',
-    'app_url':'https://www.expfactory.org',
-    'debug': 1
-}
-DOMAIN_NAME = "https://expfactory.org" # MUST BE HTTPS FOR MECHANICAL TURK
-
-You should change the keys, the domain name and application URL, and set debug to 0. The Domain Name MUST be HTTPS.
+      DOMAIN_NAME = "https://expfactory.org" # MUST BE HTTPS FOR MECHANICAL TURK
 
 Then you can bring up the container (see steps at beginning of README), essentially:
 
@@ -116,10 +108,9 @@ and replace `ADMINUSER` and `ADMINPASS` with your chosen username and password, 
 
 The last step is probably not necessary, but it's good to be sure.
 
+
 ## Setup for Production
 Log into the production server, and you can run [scripts/prepare_instance.sh](scripts/prepare_instance.sh) to install docker and docker-compose. This script will download the repo and build the image. You can then use the commands specified previously to bring up the image (e.g., `docker-compose up -d`). In the case of using something like AWS, we suggest that before building the image, you create an encrypted (separate) database, and add the credentials to it in your settings.py. There are unfortunately things you will need to do manually to get HTTPS working (see below). You should do the following:
-
- - set up HTTPS (see instructions below)
 
 
 ### Site Name
@@ -133,27 +124,6 @@ Then connect to it interactively:
 
 and run the script. You can also copy paste the code into the interactive shell generated with `python manage.py shell`.
 
-### Configuration with Mechanical Turk
-
-Mechnical Turk relies on an AWS Secret Access Key and AWS Access Key. The interface can support multiple battery deployments, each of which might be associated with different credientials, and so this authentication information is not stored with the application, but in a (more) secure file on the server. Thus, use the template in "[auth](auth/dummy.cred)" to specify your credentials. Any files of this format that you add to this folder will be available for users to select from. You will also need to fill in the file called "bogus_secrets.py" and rename it to secrets.py for the variables `SECRET_KEY` and `app_url` and when you are ready for deployment, change the `debug` variable to 0.
-
-### HTTPS
-The docker container is set up to have a secure connection with https (port 443). You can set this up manually, or use a cron job to generate a new certificate (steps detailed below). 
-
-#### Manual Setup
-To do it manually, you must walk through the steps at [https://gethttpsforfree.com/](https://gethttpsforfree.com/), and note that this would need to be done every three months. Note that when you run the python server to verify owning the domain, you may need to stop the local nginx (which is also using port 80):
-
-      sudo service nginx stop
-
-I installed this in [scripts/prepare_instance.sh](scripts/prepare_instance.sh) because it's nice to have a local nginx (outside of the docker container) if you ever want to debug with `python manage.py runserver 0.0.0.0:8000` outside of the container.
-
-Back to setting up HTTPS - it's basically an exercise in copy pasting, and you should follow the steps to a T to generate the certificates on the server. The docker image will take care of setting up the web server (the nginx.conf file).
-
-#### Setup via cron job
-
-Make the following directory:
-
-      /var/www/.well-known/acme-challenge/
 
 
 ### Encrypted database connection

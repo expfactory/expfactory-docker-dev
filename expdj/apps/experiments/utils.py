@@ -7,7 +7,7 @@ from expfactory.vm import custom_battery_download
 from expfactory.experiment import get_experiments
 from expfactory.survey import export_questions
 from expfactory.utils import copy_directory
-from expdj.apps.turk.models import Result
+from expdj.apps.result.models import Result
 from django.db.models import Min
 from numpy.random import choice
 from datetime import datetime
@@ -75,7 +75,6 @@ def install_experiments(experiment_tags=None,repo_type="experiments"):
 
     # We will return list of experiments that did not install successfully
     errored_experiments = []
-
     tmpdir = custom_battery_download(repos=[repo_type,"battery"])
 
     # The git commit is saved with the experiment as the "version"
@@ -153,6 +152,7 @@ def make_experiment_lookup(tags,battery=None):
         except:
             pass
     return experiment_lookup
+
 
 def get_battery_results(battery,exp_id=None,clean=False):
     '''get_battery_results filters down to a battery, and optionally, an experiment of interest

@@ -1,6 +1,5 @@
 import datetime
 import csv
-import hashlib
 import json
 import numpy
 import os
@@ -42,14 +41,6 @@ from expdj.apps.experiments.utils import (
 )
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT,DOMAIN_NAME
 import expdj.settings as settings
-from expdj.apps.turk.models import (
-    HIT, Result, Assignment, get_worker, Blacklist, Bonus
-)
-from expdj.apps.turk.tasks import (
-    assign_experiment_credit, update_assignments, check_blacklist, 
-    experiment_reward, check_battery_dependencies
-)
-from expdj.apps.turk.utils import get_worker_experiments
 from expdj.apps.users.models import User
 
 
@@ -62,17 +53,6 @@ def check_experiment_edit_permission(request):
         return True
     return False
 
-def check_mturk_access(request):
-    if request.user.is_superuser:
-        return True
-
-    user_roles = User.objects.filter(user=request.user)
-    if len(user_roles) == 0:
-        return False
-    elif user_roles[0].role == "MTURK":
-        return True
-    return False
-
 def check_battery_create_permission(request):
     if not request.user.is_anonymous():
         if request.user.is_superuser:
@@ -81,7 +61,7 @@ def check_battery_create_permission(request):
     user_roles = User.objects.filter(user=request.user)
     if len(user_roles) == 0:
         return False
-    elif user_roles[0].role in ["MTURK","LOCAL"]:
+    elif user_roles[0].role in ["LOCAL"]:
         return True
     return False
 
@@ -189,13 +169,6 @@ def view_experiment(request, eid, bid=None):
 def view_battery(request, bid):
     battery = get_battery(bid,request)
 
-    # Get associated HITS, update all
-    hits = HIT.objects.filter(battery=battery)
-
-    # Use task to update assignments
-    for hit in hits:
-        update_assignments.apply_async([hit.id])
-
     # Generate anonymous link
     anon_link = "%s/batteries/%s/%s/anon" %(DOMAIN_NAME,bid,hashlib.md5(battery.name).hexdigest())
 
@@ -205,23 +178,13 @@ def view_battery(request, bid):
     # Determine permissions for edit and deletion
     edit_permission = check_battery_edit_permission(request,battery)
     delete_permission = check_battery_edit_permission(request,battery)
-    mturk_permission = check_mturk_access(request)
-
-    # Render assignment details
-    assignments = dict()
-    assignments["accepted"] = [a for a in Assignment.objects.filter(hit__battery=battery) if a.status == "A"]
-    assignments["none"] = [a for a in Assignment.objects.filter(hit__battery=battery) if a.status == None]
-    assignments["submit"] = [a for a in Assignment.objects.filter(hit__battery=battery) if a.status == "S"]
-    assignments["rejected"] = [a for a in Assignment.objects.filter(hit__battery=battery) if a.status == "R"]
 
     context = {'battery': battery,
                'edit_permission':edit_permission,
                'delete_permission':delete_permission,
-               'mturk_permission':mturk_permission,
                'hits':hits,
                'anon_link':anon_link,
-               'gmail_link':gmail_link,
-               'assignments':assignments}
+               'gmail_link':gmail_link}
 
     return render(request,'experiments/battery_details.html', context)
 
@@ -307,7 +270,7 @@ def serve_battery_anon(request,bid,keyid):
         worker = get_worker(userid,create=True)
         return redirect("intro_battery",bid=bid,userid=userid)
     else:
-        return render_to_response("turk/robot_sorry.html")
+        return render_to_response("messages/robot_sorry.html")
 
 @csrf_protect
 def serve_battery_gmail(request,bid):
@@ -323,16 +286,16 @@ def serve_battery_gmail(request,bid):
             worker = get_worker(userid,create=True)
             return redirect("intro_battery",bid=bid,userid=userid)
         else:
-            return render_to_response("turk/robot_sorry.html")
+            return render_to_response("messages/robot_sorry.html")
     else:
-        return render_to_response("turk/robot_sorry.html")
+        return render_to_response("messages/robot_sorry.html")
 
 
 def preview_battery(request,bid):
 
     # No robots allowed!
     if request.user_agent.is_bot:
-        return render_to_response("turk/robot_sorry.html")
+        return render_to_response("messages/robot_sorry.html")
 
     if request.user_agent.is_pc:
 
@@ -341,23 +304,22 @@ def preview_battery(request,bid):
                    "start_url":"/batteries/%s/dummy" %(bid),
                    "assignment_id":"assenav tahcos"}
 
-        return render(request, "turk/serve_battery_intro.html", context)
+        return render(request, "experiments/serve_battery_intro.html", context)
 
 
 def intro_battery(request,bid,userid=None):
 
     # No robots allowed!
     if request.user_agent.is_bot:
-        return render_to_response("turk/robot_sorry.html")
+        return render_to_response("messages/robot_sorry.html")
 
     if request.user_agent.is_pc:
 
         battery = get_battery(bid,request)
         context = {"instruction_forms":get_battery_intro(battery),
-                   "start_url":"/batteries/%s/%s/accept" %(bid,userid),
-                   "assignment_id":"assenav tahcos"}
+                   "start_url":"/batteries/%s/%s/accept" %(bid,userid)}
 
-        return render(request, "turk/serve_battery_intro.html", context)
+        return render(request, "experiments/serve_battery_intro.html", context)
 
 @login_required
 def dummy_battery(request,bid):
@@ -396,7 +358,7 @@ def serve_battery(request,bid,userid=None):
 
     # No robots allowed!
     if request.user_agent.is_bot:
-        return render_to_response("turk/robot_sorry.html")
+        return render_to_response("messages/robot_sorry.html")
 
     # Is userid not defined, redirect them to preview
     if userid == None:
@@ -404,12 +366,12 @@ def serve_battery(request,bid,userid=None):
 
     worker = get_worker(userid,create=False)
     if isinstance(worker,list): # no id means returning []
-        return render_to_response("turk/invalid_id_sorry.html")
+        return render_to_response("messages/invalid_id_sorry.html")
 
     missing_batteries, blocking_batteries = check_battery_dependencies(battery, userid)
     if missing_batteries or blocking_batteries:
         return render_to_response(
-            "turk/battery_requirements_not_met.html",
+            "messages/battery_requirements_not_met.html",
             context={'missing_batteries': missing_batteries,
                      'blocking_batteries': blocking_batteries}
         )
@@ -425,7 +387,7 @@ def serve_battery(request,bid,userid=None):
     experiments_left = len(uncompleted_experiments)
     if  experiments_left == 0:
         # Thank you for your participation - no more experiments!
-        return render_to_response("turk/worker_sorry.html")
+        return render_to_response("messages/worker_sorry.html")
 
     task_list = select_experiments(battery,uncompleted_experiments)
     experimentTemplate = ExperimentTemplate.objects.filter(exp_id=task_list[0].template.exp_id)[0]
@@ -464,7 +426,7 @@ def serve_battery(request,bid,userid=None):
 def deploy_battery(deployment, battery, experiment_type, context, task_list, 
                    template, result, next_page=None, last_experiment=False, 
                    experiments_left=None):
-    '''deploy_battery is a general function for returning the final view to deploy a battery, either local or MTurk
+    '''deploy_battery is a general function for returning the final view to deploy a battery
     :param deployment: either "docker-mturk" or "docker-local"
     :param battery: models.Battery object
     :param experiment_type: experiments,games,or surveys
@@ -472,7 +434,7 @@ def deploy_battery(deployment, battery, experiment_type, context, task_list,
     :param next_page: the next page to navigate to [optional] default is to reload the page to go to the next experiment
     :param task_list: list of models.Experiment instances
     :param template: html template to render
-    :param result: the result object, turk.models.Result
+    :param result: the result object, experiments.models.Result
     :param last_experiment: boolean if true will redirect the user to a page to submit the result (for surveys)
     :param experiments_left: integer indicating how many experiments are left in battery.
     '''
@@ -940,8 +902,6 @@ def add_battery(request):
 @login_required
 def edit_battery(request, bid=None):
 
-    # Does the user have mturk permission?
-    mturk_permission = check_mturk_access(request)
     battery_permission = check_battery_create_permission(request)
 
     if battery_permission == True:
@@ -982,7 +942,6 @@ def edit_battery(request, bid=None):
         context = {"form": form,
                    "is_owner": is_owner,
                    "header_text":header_text,
-                   "mturk_permission":mturk_permission,
                    "battery_edit_permission":battery_edit_permission}
 
         return render(request, "experiments/edit_battery.html", context)

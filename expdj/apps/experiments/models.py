@@ -13,9 +13,6 @@ from django.db import models
 from django.db.models import Q, DO_NOTHING
 from django.db.models.signals import m2m_changed
 
-#  trying to import Result object directly from models was giving an import 
-#  error here, even though the import matched views.py exactly.
-from expdj.apps import turk
 
 class CognitiveAtlasConcept(models.Model):
     name = models.CharField(max_length=1000, null=False, blank=False)
@@ -149,13 +146,12 @@ class Battery(models.Model):
     # Name must be unique because anonymous link is generated from hash
     name = models.CharField(max_length=200, unique = True, null=False, verbose_name="Name of battery")
     description = models.TextField(blank=True, null=True)
-    credentials = models.CharField(max_length=200, unique = False, null=False, verbose_name="mturk credentials")
     consent = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your consent formatting.")
-    advertisement = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your mturk advertisement formatting.")
+    advertisement = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your advertisement formatting.")
     instructions = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your instructions formatting.")
     owner = models.ForeignKey(User)
     contributors = models.ManyToManyField(User,related_name="battery_contributors",related_query_name="contributor", blank=True,help_text="Select other Experiment Factory users to add as contributes to the battery.  Contributors can view results, deploy HITS, and edit the battery itself.",verbose_name="Contributors")
-    experiments = models.ManyToManyField(Experiment,related_name="battery_experiments",related_query_name="battery_experiments", blank=True,help_text="Select the Experiments to include in the battery. Experiments will be selected randomly from this set to fit within the maximum allowed time per HIT, and only include those experiments that a MTurk user has not completed.",verbose_name="Experimental paradigms")
+    experiments = models.ManyToManyField(Experiment,related_name="battery_experiments",related_query_name="battery_experiments", blank=True,help_text="Select the Experiments to include in the battery.",verbose_name="Experimental paradigms")
     add_date = models.DateTimeField('date published', auto_now_add=True)
     modify_date = models.DateTimeField('date modified', auto_now=True)
     maximum_time = models.IntegerField(help_text="Maximum number of minutes for the battery to endure.", null=False, verbose_name="Maxiumum time", blank=False)

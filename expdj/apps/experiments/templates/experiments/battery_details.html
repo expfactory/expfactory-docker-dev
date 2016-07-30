@@ -27,13 +27,6 @@
                             <li><a href="#" id="anon_link" class='btn-default btn-lg'>Anonymous Link</a></li>
                             <li><a href="#" id="gmail_link" class='btn-default btn-lg'>Email Authentication Link</a></li>
                             <li><a class='btn-default btn-lg' href='{% url 'generate_battery_user' battery.id %}'>New Local Participant</a></li>
-                            {% if mturk_permission %}
-                                <li role="separator" class="divider"></li>
-                                <li class="dropdown-header">Amazon Mechanical Turk</li>
-                                <li role="separator" class="divider"></li>
-                                <li><a class='btn-default btn-lg' href='{% url 'new_hit' battery.id %}'> New HIT</a></li>
-                                <li><a class='btn-default btn-lg' href='{% url 'multiple_new_hit' battery.id %}'> Batch HITs</a></li>
-                            {% endif %}
                         </ul>
                     </span>
                     {% endif %}
@@ -56,9 +49,6 @@
             <ul class="nav nav-tabs">
                 <li class="active"><a href="#details" data-toggle="tab">Details</a></li>
                 <li><a href="#experiments" data-toggle="tab">Experiments</a></li>
-                {% if mturk_permission %}
-                <li><a href="#hits" title="A HIT is a deployment of experiments to Amazon Mechanical Turk" data-toggle="tab">HITS</a></li>
-                {% endif %}
             </ul>
             <div class="tab-content">
                 <div class="tab-pane fade in active" id="details">
@@ -148,65 +138,6 @@
              {% endif %}
          {% endif %}
         </div>
-
-        {% if mturk_permission %}
-        <!-- Completion/Stats Pane -->
-        <div class="tab-pane fade" id="hits">
-            <h4>Amazon Mechanical Turk HITS</h4>
-                {% if hits %}
-                <table class="table table-condensed table-striped table-hover" id="hits_table">
-                    <thead>
-                        <th>title</th>
-                        <th>creation time</th>
-                        <th>keywords</th>
-                        <th>description</th>
-                        <th>reward</th>
-                        <th> <i data-toggle="tooltip" title="EXPIRING a HIT means it will no longer appear on the Mechanical Turk web site, and no new Workers will be allowed to accept the HIT. The record will remain here. DELETING a hit means expiring it and removing the link to it from the Experiment Factory." style="padding-left:10px;padding-top:5px" class="fa fa-2x fa-question-circle"></i>
-</th>
-                    </thead>
-                    <tbody>
-                      {% for hit in hits %}
-                          <tr id="hit_info_{{ hit.id }}">  
-                          <td>
-                          {% if hit.sandbox = True %}
-                          <a href="https://requestersandbox.mturk.com/mturk/manageHIT?viewableEditPane=manageHIT_downloadResults&HITId={{ hit.mturk_id }}" target="_blank">{{ hit.title }}</a>
-                          {% else %}
-                          <a href="https://requester.mturk.com/mturk/manageHIT?viewableEditPane=manageHIT_downloadResults&HITId={{ hit.mturk_id }}" target="_blank">{{ hit.title }}</a>
-                          {% endif %}
-                          (<a href={% url 'hit_detail' hit.id %}>Details</a>)
-                          </td>
-                          <td>{{ hit.creation_time|date:"m/d/y G:H" }}</td>
-                          <td>{{ hit.keywords }}</td>
-                          <td>{{ hit.description }}</td>
-                          <td>{{ hit.reward }}</td>
-                          <td>
-                            {% if edit_permission %}
-                            <a class='btn btn-xs btn-default' href='{% url 'manage_hit' battery.id hit.id %}'> Manage Hit</a>
-                            <a class='btn btn-xs btn-default' href='{% url 'clone_hit' battery.id hit.id %}'> Clone Hit</a>
-                            <a class='btn btn-xs btn-default' href='{% url 'expire_hit' hit.id %}' id="expire_hit"> Expire Hit</a>
-                            {% if hit.status = "D" %}
-                            <button class='btn btn-xs btn-danger' href='{% url 'delete_hit' hit.id %}' id="delete_hit"> Delete Hit</button>
-                            {% else %}
-                            <button class='btn btn-xs btn-danger disabled' href='{% url 'delete_hit' hit.id %}' id="delete_hit"> Delete Hit</button>
-                            {% endif %}
-                            {% endif %}
-                          </td>
-                        </tr>
-                      {% endfor %}
-                    </tbody>
-                </table>
-               {% else %}
-                   {% if battery.experiments.all %}
-                   <a class='button' href='{% url 'multiple_new_hit' battery.id %}'> Batch HITs</a>
-                   <a class='button' href='{% url 'new_hit' battery.id %}'> New HIT</a>
-                   {% else %}
-                   <div class="alert alert-info" role="alert">You must <a href='{% url 'add_experiment' battery.id %}'>add experiments</a> to your battery before sending HITs.</div>
-                   {% endif %}
-               {% endif %}
-              </div>
-            </div>
-        </div>
-        {% endif %}
    </div>
 
 <!-- Modal to show anon link-->

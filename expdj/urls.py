@@ -5,13 +5,13 @@ from django.contrib.auth.decorators import login_required
 from rest_framework import routers, serializers, viewsets
 from django.contrib.sitemaps.views import sitemap, index
 from django.conf.urls import include, url, patterns
-from expdj.apps.turk.models import Result, Worker
+from expdj.apps.result.models import Result, Worker
 from expdj.apps.users import urls as users_urls
 from django.http import Http404, HttpResponse
 from expdj.apps.main import urls as main_urls
-from expdj.apps.turk import urls as turk_urls
+from expdj.apps.result import urls as result_urls
 from django.conf.urls.static import static
-from expdj.apps.turk.utils import to_dict
+from expdj.apps.result.utils import to_dict
 from django.conf import settings
 from django.contrib import admin
 import os
@@ -77,7 +77,7 @@ router.register(r'api/results', ResultViewSet)
 admin.autodiscover()
 
 urlpatterns = [ url(r'^', include(main_urls)),
-                url(r'^', include(turk_urls)),
+                url(r'^', include(result_urls)),
                 url(r'^', include(experiment_urls)),
                 url(r'^accounts/', include(users_urls)),
                 url(r'^', include(router.urls)),

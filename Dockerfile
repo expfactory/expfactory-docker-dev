@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y \
     openssl \
     wget
 
-RUN pip install numpy \
-    cython
-RUN pip install -v scipy
+RUN pip install --upgrade pip
 RUN pip install numpy
+RUN pip install -v scipy
+RUN pip install cython
 RUN pip install scikit-learn pandas h5py matplotlib
 RUN pip install uwsgi
 RUN pip install 'Django==1.8.8'
@@ -42,7 +42,6 @@ RUN pip install python-openid
 RUN pip install django-sendfile
 RUN pip install django-polymorphic
 RUN pip install networkx
-RUN pip install 'rdflib>=4.1.0'
 RUN pip install celery[redis]
 RUN pip install django-celery
 RUN pip install scikit-learn

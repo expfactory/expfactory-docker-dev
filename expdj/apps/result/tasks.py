@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import numpy
 import os
 
-from boto.mturk.price import Price
 from celery import shared_task, Celery
 
 from django.conf import settings
@@ -11,28 +10,12 @@ from django.utils import timezone
 
 from expdj.apps.experiments.models import ExperimentTemplate, Battery
 from expdj.apps.experiments.utils import get_experiment_type
-from expdj.apps.turk.models import Result, Assignment, get_worker, HIT, Blacklist, Bonus
-from expdj.settings import TURK
-
-#  trying to import Result object directly from models was giving an import
-#  error here, even though the import matched views.py exactly.
-from expdj.apps import turk
+from expdj.apps.result.models import Result, get_worker
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'expdj.settings')
 app = Celery('expdj')
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
-
-@shared_task
-def update_assignments(hit_id):
-    '''update_assignments updates all assignment (status, etc) from Amazon given a hit_id
-    :param hit_id: HIT id from turk.models
-    '''
-    try:
-        hit = HIT.objects.get(id=hit_id)
-        hit.update_assignments()
-    except:
-        pass
 
 @shared_task
 def assign_experiment_credit(worker_id):
@@ -65,12 +48,11 @@ def check_blacklist(result_id):
     the rejection criteria, and adds a flag to the user/battery blacklist object
     in the case of a violation. When the user/battery blacklist flag count
     exceeds the battery.blacklist_threshold, the user is blacklisted.
-    :param result: a turk.models.Result object
+    :param result: a result.models.Result object
     '''
 
     result = Result.objects.get(id=result_id)
     worker = result.worker
-    battery = result.battery
     experiment_template = result.experiment
     experiment = [b for b in battery.experiments.all() if b.template == experiment_template]
 
@@ -132,106 +114,6 @@ def add_blacklist(blacklist,experiment,description):
         blacklist.blacklist_time = timezone.now()
     blacklist.save()
 
-
-def get_bonus_reason(bonus):
-    '''get_bonus_reason parses through worker bonus amounts, and returns a message to the worker for the reason
-    :param bonus: expdj.apps.turk.models.Bonus object
-    '''
-    amounts = dict(bonus.amounts)
-    reason = ""
-    for experiment_name,record in amounts.iteritems():
-        new_reason = "%s: granted $%s because %s\n" %(experiment_name,record["amount"],record["description"])
-        reason = "%s%s" %(reason,new_reason)
-    return reason
-
-def grant_bonus(result_id):
-    '''grant_bonus will calculate and grant a total bonus for a worker
-    :param result_id: the id the result to grant the bonus for
-    '''
-    result = Result.objects.get(id=result_id)
-    worker = result.worker
-    battery = result.battery
-    result.assignment.hit.generate_connection()
-    try:
-        bonus = Bonus.objects.get(worker=worker,battery=battery)
-        amount = bonus.calculate_bonus()
-        price = Price(amount)
-        reason = get_bonus_reason(bonus)
-        result.assignment.hit.connection.grant_bonus(worker.id,result.assignment.mturk_id,price,reason)
-        bonus.granted = True
-        bonus.save()
-    except Bonus.DoesNotExist:
-        pass
-
-@shared_task
-def experiment_reward(result_id):
-    '''experiment_reward will record bonus based on satisfying some criteria
-    The final bonus will be allocated at the end of the battery, after
-    a result is submit, with grant_bonus. This function currently has code
-    similar to check_blacklist, and the two are separate as this is expected
-    to change
-    :result_id: the id of the result object, turk.models.Result
-    '''
-
-    # Look up all result objects for worker
-    result = Result.objects.get(id=result_id)
-    battery = result.battery
-    worker = result.worker
-    experiment_template = result.experiment
-    experiment = [b for b in battery.experiments.all() if b.template == experiment_template]
-
-    if len(experiment)>0:
-        experiment=experiment[0]
-
-        do_bonus = True if experiment_template.performance_variable != None and experiment.include_bonus == True else False
-        bonus_active = battery.bonus_active
-
-        if result.completed == True and do_bonus == True and bonus_active == True:
-            for credit_condition in experiment.credit_conditions.all():
-                variable_name = credit_condition.variable.name
-                variables = get_variables(result,variable_name)
-                func = [x[1] for x in credit_condition.OPERATOR_CHOICES if x[0] == credit_condition.operator][0]
-                func_description = [x[0] for x in credit_condition.OPERATOR_CHOICES if x[0] == credit_condition.operator][0]
-
-                # Look through variables and determine if passes condition
-                for variable in variables:
-                    comparator = credit_condition.value
-                    if isinstance(variable,bool):
-                        comparator = bool(comparator)
-                    elif isinstance(variable,float) or isinstance(variable,int):
-                        variable = float(variable)
-                        comparator = float(comparator)
-
-                    # If the variable passes criteria and it's a performance variable
-                    if func(variable,comparator):
-                        if credit_condition.variable == experiment_template.performance_variable:
-                            description = "%s %s %s %s" %(variable_name,variable,func_description,comparator)
-                            bonus,_ = Bonus.objects.get_or_create(worker=worker,battery=battery)
-                            if credit_condition.amount != None:
-                                add_bonus(bonus,experiment,description,credit_condition.amount)
-                                result.credit_granted = True
-                                result.save()
-
-
-def add_bonus(bonus,experiment,description,amount):
-    '''add_bonus will add an entry to the bonus (json) list
-    :param bonus: turk.models.Bonus object
-    :param experiment: experiments.models.Experiment
-    :param description: eg 'performance_var 556.333333333 GREATERTHAN 400.0'
-    :param amount: the amount, in dollars to be given to the worker
-    '''
-    new_bonus = {"experiment_id":experiment.id,
-                 "description":description,
-                 "amount":amount}
-
-    if bonus.amounts == None:
-        amounts = dict()
-        amounts[experiment.template.exp_id] = new_bonus
-        bonus.amounts = amounts
-    else:
-        bonus.amounts[experiment.template.exp_id] = new_bonus
-
-    bonus.save()
 
 
 # EXPERIMENT RESULT PARSING helper functions
@@ -305,7 +187,7 @@ def check_battery_dependencies(current_battery, worker_id):
     required and restricted batteries to determine if the worker is 
     eligible to attempt the current battery.
     '''
-    worker_results = turk.models.Result.objects.filter(
+    worker_results = Result.objects.filter(
         worker_id = worker_id,
         completed=True
     )

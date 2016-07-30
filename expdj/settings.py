@@ -20,8 +20,8 @@ matplotlib.use('Agg')
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-DOMAIN_NAME = "https://expfactory.org" # MUST BE HTTPS FOR MECHANICAL TURK
-DOMAIN_NAME_HTTP = "http://expfactory.org" # MUST BE HTTPS FOR MECHANICAL TURK
+DOMAIN_NAME = "https://expfactory.org" 
+DOMAIN_NAME_HTTP = "http://expfactory.org" 
 
 ADMINS = (('vsochat', 'vsochat@gmail.com'),)
 
@@ -30,7 +30,6 @@ MANAGERS = ADMINS
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 DEBUG = False
-MTURK_ALLOW = True # Allow users to deploy to real Mturk (not just sandbox)
 TEMPLATE_DEBUG = False
 ALLOWED_HOSTS = ["*"]
 
@@ -61,8 +60,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'expdj.apps.main',
-    'expdj.apps.turk',
     'expdj.apps.experiments',
+    'expdj.apps.result',
     'expdj.apps.users',
     'social.apps.django_app.default',
     'crispy_forms',
@@ -192,7 +191,7 @@ CELERY_DEFAULT_QUEUE = 'default'
 CELERY_QUEUES = (
     Queue('default', Exchange('default'), routing_key='default'),
 )
-CELERY_IMPORTS = ('expdj.apps.turk.tasks', )
+CELERY_IMPORTS = ('expdj.apps.result.tasks', )
 
 # here is how to run a task regularly
 #CELERYBEAT_SCHEDULE = {
