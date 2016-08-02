@@ -11,7 +11,7 @@
     <p>Designed and built by <strong><a href="https://poldracklab.stanford.edu">Poldracklab</a></strong>.</p>
     <ul class="actions">
         {% if request.user.is_authenticated %}
-        <li><a href="{% url 'experiments' %}" class="button">View Experiments</a></li>
+        <li><a href="{% url 'batteries' %}" class="button">My Batteries</a></li>
         {% else %}
         <li><a href="{% url 'about' %}" class="button">Learn More</a></li>
         <li><a href="{% url 'signup' %}" class="button">Sign up</a></li>

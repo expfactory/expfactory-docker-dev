@@ -28,11 +28,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
 from expdj.apps.main.views import google_auth_view
 from expdj.apps.experiments.forms import (
-    ExperimentForm, ExperimentTemplateForm, BatteryForm, BlacklistForm
+    ExperimentForm, BatteryForm
 )
 from expdj.apps.experiments.models import (
-    ExperimentTemplate, Experiment, Battery, ExperimentVariable, 
-    CreditCondition
+    Experiment, Battery
 )
 from expdj.apps.experiments.utils import (
     get_experiment_selection, install_experiments, update_credits, 
@@ -84,16 +83,6 @@ def check_battery_edit_permission(request,battery):
 
 #### GETS #############################################################
 
-# get experiment template
-def get_experiment_template(eid,request,mode=None):
-    keyargs = {'pk':eid}
-    try:
-        experiment = ExperimentTemplate.objects.get(**keyargs)
-    except ExperimentTemplate.DoesNotExist:
-        raise Http404
-    else:
-        return experiment
-
 # get experiment
 def get_experiment(eid,request,mode=None):
     keyargs = {'id':eid}
@@ -117,7 +106,7 @@ def get_battery(bid,request):
 
 #### VIEWS #############################################################
 
-# View a single experiment
+# Update an experiment from github url
 @login_required
 def update_experiment_template(request,eid):
     '''This will update static files, along with the config.json parameters'''
@@ -189,7 +178,7 @@ def view_battery(request, bid):
     return render(request,'experiments/battery_details.html', context)
 
 
-# All experiments
+# All experiments for the user
 def experiments_view(request):
     experiments = ExperimentTemplate.objects.all()
     delete_permission = check_experiment_edit_permission(request)
@@ -200,14 +189,11 @@ def experiments_view(request):
 
 # All batteries
 @login_required
-def batteries_view(request,uid=None):
-    if not uid:
-        batteries = Battery.objects.all()
-    else:
-        batteries = Battery.objects.filter(owner_id=uid)
-    generate_battery_permission = False
-    context = {'batteries': batteries}
-    return render(request, 'experiments/all_batteries.html', context)
+def batteries_view(request):
+    batteries = Battery.objects.filter(owner_id=uid)
+    if request.user.is_authenticated():
+        context["user_batteries"] = Battery.objects.filter(owner_id=request.user)
+    return render(request, 'batteries/all_batteries.html', context)
 
 # Errors and Messages ----------------------------------------------------------
 def enable_cookie_view(request):

@@ -1,11 +1,11 @@
-from expdj.apps.experiments.models import Battery, ExperimentTemplate, CognitiveAtlasTask
+from expdj.apps.experiments.models import Battery, Experiment
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from expdj.apps.experiments import urls as experiment_urls
 from django.contrib.auth.decorators import login_required
 from rest_framework import routers, serializers, viewsets
 from django.contrib.sitemaps.views import sitemap, index
 from django.conf.urls import include, url, patterns
-from expdj.apps.result.models import Result, Worker
+from expdj.apps.result.models import Worker
 from expdj.apps.users import urls as users_urls
 from django.http import Http404, HttpResponse
 from expdj.apps.main import urls as main_urls
@@ -20,10 +20,10 @@ import os
 from django.conf.urls import ( handler404, handler500 )
 
 # Sitemaps
-from expdj.api.sitemap import ExperimentTemplateSitemap, SurveyTemplateSitemap, GameTemplateSitemap
-sitemaps = {"experiments":ExperimentTemplateSitemap,
-            "surveys":SurveyTemplateSitemap,
-            "games":GameTemplateSitemap}
+#from expdj.api.sitemap import ExperimentSitemap, SurveySitemap, GameSitemap
+#sitemaps = {"experiments":ExperimentSitemap,
+#            "surveys":SurveySitemap,
+#            "games":GameSitemap}
 
 # Configure custom error pages
 handler404 = 'expdj.apps.main.views.handler404'
@@ -35,44 +35,25 @@ class BatterySerializer(serializers.HyperlinkedModelSerializer):
         model = Battery
         fields = ('name', 'description')
 
-class CognitiveAtlasTaskSerializer(serializers.HyperlinkedModelSerializer):
+class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
+    battery = BatterySerializer()
     class Meta:
-        model = CognitiveAtlasTask
-        fields = ('name','cog_atlas_id')
-
-class ExperimentTemplateSerializer(serializers.HyperlinkedModelSerializer):
-    cognitive_atlas_task = CognitiveAtlasTaskSerializer()
-    class Meta:
-        model = ExperimentTemplate
-        fields = ('exp_id','name','cognitive_atlas_task','reference','version','template')
+        model = Experiment
+        fields = ('exp_id','name','reference','version','template','battery')
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Worker
         fields = ["id"]
 
-class ResultSerializer(serializers.HyperlinkedModelSerializer):
-    experiment = ExperimentTemplateSerializer()
-    battery = BatterySerializer()
-    worker = WorkerSerializer()
-    data = serializers.SerializerMethodField('get_taskdata')
-
-    def get_taskdata(self,result):
-        return to_dict(result.taskdata)
-
-    class Meta:
-        model = Result
-        fields = ('data','experiment','battery','worker','language','browser','platform','completed','finishtime')
-
-
 # ViewSets define the view behavior.
-class ResultViewSet(viewsets.ModelViewSet):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
+class ExperimentViewSet(viewsets.ModelViewSet):
+    queryset = Experiment.objects.all()
+    serializer_class = ExperimentSerializer
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
-router.register(r'api/results', ResultViewSet)
+router.register(r'api/results', ExperimentViewSet)
 
 admin.autodiscover()
 
@@ -81,8 +62,8 @@ urlpatterns = [ url(r'^', include(main_urls)),
                 url(r'^', include(experiment_urls)),
                 url(r'^accounts/', include(users_urls)),
                 url(r'^', include(router.urls)),
-                url(r'^sitemap\.xml$', index, {'sitemaps': sitemaps}),
-                url(r'^sitemap-(?P<section>.+)\.xml$', sitemap, {'sitemaps': sitemaps}),
+#                url(r'^sitemap\.xml$', index, {'sitemaps': sitemaps}),
+#                url(r'^sitemap-(?P<section>.+)\.xml$', sitemap, {'sitemaps': sitemaps}),
                 url(r'^api/', include('rest_framework.urls', namespace='rest_framework')),
                 url(r'^admin/', include(admin.site.urls))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

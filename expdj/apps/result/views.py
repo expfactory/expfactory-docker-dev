@@ -16,12 +16,12 @@ from django.shortcuts import get_object_or_404, render_to_response, render, redi
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from expdj.apps.experiments.models import (Battery, ExperimentTemplate)
+from expdj.apps.experiments.models import Battery
 from expdj.apps.experiments.views import (check_battery_edit_permission, 
      get_battery_intro, deploy_battery)
 from expdj.apps.experiments.utils import get_experiment_type, select_experiments
 from expdj.apps.result.forms import WorkerContactForm
-from expdj.apps.result.models import Worker, Result, get_worker
+from expdj.apps.result.models import Worker, get_worker
 from expdj.apps.result.tasks import *
 from expdj.apps.result.utils import *
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT

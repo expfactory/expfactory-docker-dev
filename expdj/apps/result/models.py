@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from expdj.apps.result.utils import to_dict, get_time_difference
 from django.core.validators import MaxValueValidator, MinValueValidator
-from expdj.apps.experiments.models import Experiment, ExperimentTemplate, Battery
+from expdj.apps.experiments.models import Experiment, Battery
 from expdj.settings import DOMAIN_NAME, BASE_DIR
 from django.db.models.signals import pre_init
 from django.contrib.auth.models import User
@@ -56,34 +56,3 @@ def get_worker(worker_id,create=True):
     worker.last_visit_time = now
     worker.save()
     return worker
-
-
-class Result(models.Model):
-    '''A result holds a battery id and an experiment template, to keep track of the battery/experiment combinations that a worker has completed'''
-    taskdata = JSONField(null=True,blank=True,load_kwargs={'object_pairs_hook': collections.OrderedDict})
-    version = models.CharField(max_length=128,null=True,blank=True,help_text="Experiment version (github commit) at completion time of result")
-    worker = models.ForeignKey(Worker,null=False,blank=False,related_name='result_worker')
-    experiment = models.ForeignKey(ExperimentTemplate,help_text="The Experiment Template completed by the worker in the battery",null=False,blank=False,on_delete=DO_NOTHING)
-    battery = models.ForeignKey(Battery, help_text="Battery of Experiments deployed by the HIT.", verbose_name="Experiment Battery", null=False, blank=False,on_delete=DO_NOTHING)
-    finishtime = models.DateTimeField(null=True,blank=True,help_text=("The date and time, in UTC, the Worker finished the result"))
-    current_trial = models.PositiveIntegerField(null=True,blank=True,help_text=("The last (current) trial recorded as complete represented in the results."))
-    language = models.CharField(max_length=128,null=True,blank=True,help_text="language of the browser associated with the result")
-    browser = models.CharField(max_length=128,null=True,blank=True,help_text="browser of the result")
-    platform = models.CharField(max_length=128,null=True,blank=True,help_text="platform of the result")
-    completed = models.BooleanField(choices=((False, 'Not completed'),
-                                             (True, 'Completed')),
-                                              default=False,verbose_name="participant completed the experiment")
-
-    class Meta:
-        verbose_name = "Result"
-        verbose_name_plural = "Results"
-        unique_together = ("worker","battery","experiment")
-
-    def __repr__(self):
-        return u"Result: id[%s],worker[%s],battery[%s],experiment[%s]" %(self.id,self.worker,self.battery,self.experiment)
-
-    def __unicode__(self):
-        return u"Result: id[%s],worker[%s],battery[%s],experiment[%s]" %(self.id,self.worker,self.battery,self.experiment)
-
-    def get_taskdata(self):
-        return to_dict(self.taskdata)

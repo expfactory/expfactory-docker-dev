@@ -177,9 +177,10 @@ CACHES = {
             }
 }
 
-# Mandrill config
-MANDRILL_API_KEY = "z2O_vfFUJB4L2yeF4Be9Tg" # this is a test key replace with a different one in production
-EMAIL_BACKEND = "djrill.mail.backends.djrill.DjrillBackend"
+# SendGrid Email
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
 # Celery config
 BROKER_URL = 'redis://redis:6379/0'

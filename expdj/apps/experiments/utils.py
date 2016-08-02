@@ -1,13 +1,9 @@
-from expdj.apps.experiments.models import Experiment, ExperimentTemplate, \
-  CognitiveAtlasTask, CognitiveAtlasConcept, ExperimentVariable, ExperimentNumericVariable, \
-  ExperimentBooleanVariable, ExperimentStringVariable
+from expdj.apps.experiments.models import Experiment
 from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
-from cognitiveatlas.api import get_task, get_concept
 from expfactory.vm import custom_battery_download
 from expfactory.experiment import get_experiments
 from expfactory.survey import export_questions
 from expfactory.utils import copy_directory
-from expdj.apps.result.models import Result
 from django.db.models import Min
 from numpy.random import choice
 from datetime import datetime

@@ -81,7 +81,12 @@ Before bringing up your container, you must create a file `secrets.py` in the ex
 
       DOMAIN_NAME = "https://expfactory.org" # MUST BE HTTPS FOR MECHANICAL TURK
 
-Then you can bring up the container (see steps at beginning of README), essentially:
+You will also need to define a SendMail username and password for sending results to email:
+
+      EMAIL_HOST_USER = 'sendmail_username'
+      EMAIL_HOST_PASSWORD = 'sendmail_password
+
+Note that this API will let you use their SMTP server, giving you 12K emails per month. Then you can bring up the container (see steps at beginning of README), essentially:
 
       docker-compose up -d
 
