@@ -51,6 +51,10 @@ class Battery(models.Model):
         help_text=("Batteries that must not be completed in order for "
                    "this battery to be attempted")
     )
+    private = models.BooleanField(choices=((False, 'Public'),
+                                           (True, 'Private')),
+                                            default=False,verbose_name="Private")
+
 
     def get_absolute_url(self):
         return_cid = self.id
@@ -84,7 +88,7 @@ class Experiment(models.Model):
     template = models.CharField(max_length=100,null=True,blank=False)
     order = models.IntegerField(help_text="Order for experiment presentation. Smaller numbers will be selected first, and equivalent numbers will be chosen from randomly.", null=False, default=1,verbose_name="Experiment order", blank=False)
     version = models.CharField(max_length=100,null=True,blank=False)
-    battery = models.ForeignKey(Battery)
+    battery = models.ForeignKey(Battery,null=False,blank=False)
 
     def __meta__(self):
         ordering = ["name"]

@@ -35,8 +35,9 @@ class ExperimentForm(ModelForm):
 class BatteryForm(ModelForm):
 
     class Meta:
-        exclude = ('owner', 'contributors')
         model = Battery
+        fields = ('name', 'description','consent','advertisement','instructions','maximum_time',
+                  'active','presentation_order','required_batteries','restricted_batteries','private')
 
     def clean(self):
         cleaned_data = super(BatteryForm, self).clean()
@@ -45,11 +46,6 @@ class BatteryForm(ModelForm):
     def __init__(self, *args, **kwargs):
 
         super(BatteryForm, self).__init__(*args, **kwargs)
-
-        # Dynamically add available credential files
-        credential_files = [(os.path.basename(x),os.path.basename(x)) for x in glob("%s/expdj/auth/*.cred" %BASE_DIR)]
-        self.fields['credentials'] = forms.ChoiceField(choices=credential_files)
-
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-2'

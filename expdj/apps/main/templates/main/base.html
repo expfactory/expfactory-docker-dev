@@ -68,7 +68,7 @@
                                 <li class="break"><a href="{% url 'batteries' %}">Batteries</a>
                                     <ul>
                                         <li><a href="{% url 'batteries' %}">View Batteries</a></li>
-                                        {% if request.user.is_superuser %}
+                                        {% if request.user.is_authenticated %}
                                         <li><a href="{% url 'batteries' request.user.id %}">My Batteries</a></li>
                                         <li><a href="{% url 'new_battery' %}">New Battery</a></li>
                                         {% endif %}

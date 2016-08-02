@@ -187,12 +187,19 @@ def experiments_view(request):
     return render(request, 'experiments/all_experiments.html', context)
 
 
-# All batteries
+# Show all batteries, or user batteries
 @login_required
-def batteries_view(request):
-    batteries = Battery.objects.filter(owner_id=uid)
-    if request.user.is_authenticated():
-        context["user_batteries"] = Battery.objects.filter(owner_id=request.user)
+def batteries_view(request,uid=None):
+    if uid != None:
+        batteries = Battery.objects.filter(owner_id=uid)
+        title = "My Batteries"
+    else:
+        batteries = Battery.objects.filter(private=False)
+        title = "All Batteries"
+
+    context = {"batteries":batteries,
+               "title":title}
+
     return render(request, 'batteries/all_batteries.html', context)
 
 # Errors and Messages ----------------------------------------------------------
