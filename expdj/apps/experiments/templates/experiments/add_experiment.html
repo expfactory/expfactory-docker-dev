@@ -3,6 +3,20 @@
 {% block head %}
 <link rel="stylesheet" href="{% static "css/select2.min.css" %}" />
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<style>
+/* Table Styling */
+.tl {
+  text-align: left;
+}
+
+.tc {
+  text-align: center;
+}
+
+.tr {
+  text-align: right;
+}
+</style>
 {% endblock %}
 {% block content %}
 <div class="row">
@@ -12,12 +26,10 @@
         <!-- Content -->
         <article id="content">
             <header>
-                <h2>New Experiment <i style="font-size:12" data-toggle="tooltip" title="You can install experiments from any valid Github repo, including the selection offered by the experiment factory." class="fa fa-question-circle"></i></h2>
+                <h2>New Experiment <i style="font-size:10" data-toggle="tooltip" title="You can install experiments from any valid Github repo, including the selection offered by the experiment factory." class="fa fa-question-circle"></i></h2>
             </header>
 
-            <form action="{% url 'save_experiment' bid %}" method="post">
-
-             {% csrf_token %}
+              <!-- Select Expfactory repo-->
               <div class="form-group">
                 <label for="experiment">View Expfactory Repo:</label>
                 <select class="form-control" id="repo" name="repo">
@@ -27,11 +39,51 @@
                       <option value="https://www.github.com/expfactory/expfactory-games">Expfactory-Games</option>
                 </select>
               </div>
-             <input type="submit" value="Add">
-           </form>
 
-        </article>
-    </div>
+             <!-- Custom repo-->
+             <div class="form-group">
+                 <label for="custom_repo">Custom Repo <i style="font-size:10" data-toggle="tooltip" title="Valid experiments in the top level of your repo will be available for install." class="fa fa-question-circle"></i></label>
+                 <input type="url" class="form-control" id="custom_repo" aria-describedby="custom_repo" placeholder="Enter repo Github URL">
+                 <button type="button" id="search_repo" class="btn btn-primary btn-xs"><i class="fa fa-search"></i>  Search </button>
+             </div>
+             
+             <form action="{% url 'save_experiment' bid %}" method="post">
+
+             {% csrf_token %}
+
+             <main id="table" class="table-editable hide">
+                 <div class="panel panel-default">
+      
+                     <!-- Default panel contents -->
+                     <div class="panel-heading">Valid Experiments</div>
+                         <div class="panel-body">
+                             <div class="row-fluid">
+                                 <div class="col-md-9">
+                                     <input type="text" class="form-control page-filter" placeholder="filter.." />
+                                 </div>
+          
+                             <div class="col-md-3 tr">
+                             </div>
+                         </div>
+                     </div>
+
+                     <!-- Table -->
+                     <table class="table searchable table-striped table-hover">
+                         <thead>
+                             <tr>
+                                 <th style="width:42px;"><input type="checkbox" id="check-all" /></th>
+                                 <th>ID <i style="font-size:12" data-toggle="tooltip" title="The 'exp_id' is also the folder name." class="fa fa-question-circle"></i></th>
+                                 <th>Name</th>
+                                 <th style="width:20px;"></th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                         </tbody>
+                     </table>
+            </article>
+        </div>
+        <input id="submit" type="submit" class="hide" value="Add">
+   </form>
 </div>
 
 
@@ -44,14 +96,9 @@
 
 $(document).ready(function() {
 
-    // Selection of a new experiment clears the table, fills in options
-    $("#repo").select2();
-    $("#repo").change(function(){
-        var selected_repo = $("#repo").val()
-
-        // Function to retrieve experiments
-        var url = "/routes/repos/view?url=" + encodeURIComponent(selected_repo)
-
+    // Function to retrieve valid experiments from a repo
+    function get_experiments(url) {   
+ 
         // Retrieve point list
         $.ajax({
                 type: "GET",
@@ -59,11 +106,105 @@ $(document).ready(function() {
                 // if this were not local, would want csrftoken here under data
                 complete: function (data, error){
                    var results = JSON.parse(data.responseText);
-                   console.log(results)           
+
+                   // Clear table of old entries
+                   $(".result_row").remove();
+
+                   // Add new entries
+                   if (results.experiments.length>0){
+
+                       $.each(results.experiments,function(i,e){
+                           var newrow = '<tr class="result_row"><td><input type="checkbox" class="row-check" name="EXPERIMENT_' + e.exp_id + 
+                                    '"></input></td>\n<td contenteditable="true">' + e.exp_id + 
+                                    '</td> <td contenteditable="true">' + e.name + '</td><td>' +
+                                    '<button type="button" class="btn btn-danger btn-xs row-del"><i class="fa fa-trash-o"></i></button></td></tr>'
+                           $TABLE.find('table').append(newrow)
+                       })
+
+                       // Show the table and submit buttons
+                       $("#table").removeClass("hide");
+                       $("#submit").removeClass("hide");
+
+
+                   } else {
+
+                       // If there are no valid experiments, hide the table and submit
+                       $("#table").addClass("hide")
+                       $("#submit").addClass("hide");
+                   }
                 },
                 dataType: 'html',
         });
+    }
+
+    // Table functions
+    var $TABLE = $('#table');
+
+    $('.row-del').click(function () {
+        $(this).parents('tr').detach();
     });
+
+    // Table Filtering
+    var activeSystemClass = $('.list-group-item.active');
+        $('.page-filter').keyup( function() {
+        var that = this;
+        // affect all table rows on in systems table
+        var tableBody = $('.searchable tbody');
+        var tableRowsClass = $('.searchable tbody tr');
+        $('.search-sf').remove();
+        tableRowsClass.each( function(i, val) {
+        //Lower text for case insensitive
+        var rowText = $(val).text().toLowerCase();
+        var inputText = $(that).val().toLowerCase();
+        if(inputText != '') {
+            $('.search-query-sf').remove();
+            tableBody.prepend('<tr class="search-query-sf"><td colspan="6"><strong>Searching for: "' + $(that).val() + '"</strong></td></tr>');
+        } else {
+            $('.search-query-sf').remove();
+        }
+        if (rowText.indexOf(inputText)== -1) {
+          //hide rows
+          tableRowsClass.eq(i).hide();
+          } else {
+              $('.search-sf').remove();
+              tableRowsClass.eq(i).show();
+          }
+     });
+     //all tr elements are hidden
+     if(tableRowsClass.children(':visible').length == 0) {
+        tableBody.append('<tr class="search-sf"><td class="text-muted" colspan="6">No entries found.</td></tr>');
+     }
+   });
+
+    // Add checkbox to table 
+    $(document).on('change', 'table thead [type="checkbox"]', function(e){
+        e && e.preventDefault();
+        var $table = $(e.target).closest('table'), $checked = $(e.target).is(':checked');
+        $('tbody [type="checkbox"]',$table).prop('checked', $checked);
+        $("#btn-del-reports").toggle();
+    });
+
+    // Selection of a new experiment clears the table, fills in options
+    $("#repo").select2();
+
+    // When Expfactory select is changed, retrieve valid experiments
+    $("#repo").change(function(){
+        var selected_repo = $("#repo").val()
+
+        // Function to retrieve experiments
+        var url = "/routes/repos/view?url=" + encodeURIComponent(selected_repo)
+        get_experiments(url);
+    });
+
+    // When custom repo is searched, retrieve valid experiments
+    $("#search_repo").click(function(){
+        var selected_repo = $("#custom_repo").val()
+
+        // Function to retrieve experiments
+        var url = "/routes/repos/view?url=" + encodeURIComponent(selected_repo)
+        get_experiments(url);
+    });
+
 
 });
 
