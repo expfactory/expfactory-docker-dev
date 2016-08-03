@@ -1,5 +1,6 @@
 import datetime
 import csv
+import hashlib
 import json
 import numpy
 import os
@@ -171,21 +172,17 @@ def view_battery(request, bid):
     context = {'battery': battery,
                'edit_permission':edit_permission,
                'delete_permission':delete_permission,
-               'hits':hits,
                'anon_link':anon_link,
                'gmail_link':gmail_link}
 
-    return render(request,'experiments/battery_details.html', context)
+    return render(request,'batteries/battery_details.html', context)
 
 
 # All experiments for the user
 def experiments_view(request):
-    experiments = ExperimentTemplate.objects.all()
-    delete_permission = check_experiment_edit_permission(request)
-    context = {'experiments': experiments,
-               'delete_permission':delete_permission}
+    experiments = Experiment.objects.filter(battery__private=False)
+    context = {'experiments': experiments}
     return render(request, 'experiments/all_experiments.html', context)
-
 
 # Show all batteries, or user batteries
 @login_required
@@ -603,30 +600,6 @@ def save_new_template(request,template_type):
 # Install Templates ----------------------------------------------------------
 
 @login_required
-def add_experiment_template(request):
-    return add_new_template(request,"experiments")
-
-@login_required
-def add_survey_template(request):
-    return add_new_template(request,"surveys")
-
-@login_required
-def add_game_template(request):
-    return add_new_template(request,"games")
-
-@login_required
-def save_experiment_template(request):
-    return save_new_template(request,"experiments")
-
-@login_required
-def save_survey_template(request):
-    return save_new_template(request,"surveys")
-
-@login_required
-def save_game_template(request):
-    return save_new_template(request,"games")
-
-@login_required
 def edit_experiment_template(request,eid=None):
     '''edit_experiment_template
     view for editing a single experiment. Likely only will be useful to change publication status
@@ -811,13 +784,12 @@ def modify_experiment(request,bid):
 @login_required
 def add_experiment(request,bid):
     '''add_experiment
-    View for presenting available experiments to user to install to battery
+    By default, show experiments available in expfactory-experiments, expfactory-surverys, and expfactory-games
     '''
     battery = get_battery(bid,request)
-    current_experiments = [x.template.exp_id for x in battery.experiments.all()]
-    newexperiments = [x for x in ExperimentTemplate.objects.all() if x.exp_id not in current_experiments]
-    return prepare_change_experiment(request,battery,newexperiments,"Add New")
-
+    context = {"bid":battery.id}
+    return render(request, "experiments/add_experiment.html", context)
+    
 
 @login_required
 def change_experiment_order(request,bid,eid):
@@ -953,126 +925,3 @@ def delete_battery(request, bid):
         [r.delete() for r in results]
         battery.delete()
     return redirect('batteries')
-
-
-@login_required
-def subject_management(request,bid):
-    '''subject_management includes blacklist criteria, etc.
-    :param bid: the battery id
-    '''
-    battery = get_battery(bid,request)
-    blacklists = Blacklist.objects.filter(battery=battery)
-    bonuses = Bonus.objects.filter(battery=battery)
-
-    if request.method == "POST":
-        form = BlacklistForm(request.POST, instance=battery)
-
-        if form.is_valid():
-            battery = form.save()
-            return HttpResponseRedirect(battery.get_absolute_url())
-    else:
-        form = BlacklistForm(instance=battery)
-
-    context = {"form": form,
-               "battery":battery,
-               "blacklists":blacklists,
-               "bonuses":bonuses}
-
-    return render(request, "experiments/subject_management.html", context)
-
-#### EXPORT #############################################################
-
-# Export specific experiment data
-@login_required
-def export_battery(request,bid):
-    battery = get_battery(bid,request)
-    output_name = "expfactory_battery_%s.tsv" %(battery.id)
-    return export_experiments(battery,output_name)
-
-# Export specific experiment data
-@login_required
-def export_experiment(request,eid):
-    battery = Battery.objects.filter(experiments__id=eid)[0]
-    experiment = get_experiment(eid,request)
-    output_name = "expfactory_experiment_%s.tsv" %(experiment.template.exp_id)
-    return export_experiments(battery,output_name,[experiment.template.exp_id])
-
-# General function to export some number of experiments
-def export_experiments(battery,output_name,experiment_tags=None):
-
-    # Get all results associated with Battery
-    results = Result.objects.filter(battery=battery)
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="%s"' %(output_name)
-    writer = csv.writer(response,delimiter='\t')
-
-    # Make a results pandas dataframe
-    df = make_results_df(battery,results)
-
-    # Specifying individual experiments removes between trial stufs
-    if experiment_tags != None:
-        if isinstance(experiment_tags,str):
-            experiment_tags = [experiment_tags]
-        df = df[df.experiment_exp_id.isin(experiment_tags)]
-
-    # The program reading in values should fill in appropriate nan value
-    df[df.isnull()]=""
-
-    # Write header
-    writer.writerow(df.columns.tolist())
-
-    for row in df.iterrows():
-        try:
-            values = row[1].tolist()
-            writer.writerow(values)
-        except:
-            pass
-
-    return response
-
-#### RESULTS VISUALIZATION #####################################################
-@login_required
-def battery_results_dashboard(request,bid):
-    '''battery_results_dashboard will show the user a dashboard to select an experiment
-    to view results for
-    '''
-    context = battery_results_context(request,bid)
-    return render(request, "experiments/results_dashboard_battery.html", context)
-
-@login_required
-def battery_results_context(request,bid):
-    '''battery_result_context is a general function used by experiment and battery
-    results dashboard to return context with experiments completed for a battery
-    '''
-    battery = get_battery(bid,request)
-
-    # Check if battery has results
-    results = Result.objects.filter(battery=battery,completed=True)
-    completed_experiments = numpy.unique([r.experiment.exp_id for r in results]).tolist()
-    experiments = ExperimentTemplate.objects.filter(exp_id__in=completed_experiments)
-    context = {'battery': battery,
-               'experiments':experiments,
-               'bid':battery.id}
-    return context
-
-@login_required
-def experiment_results_dashboard(request,bid):
-    '''experiment_results_dashboard will show the user a result for a particular experiment
-    '''
-    if request.method == "POST":
-        battery = get_battery(bid,request)
-        template = get_experiment_template(request.POST["experiment"],request)
-        results = get_battery_results(battery,exp_id=template.exp_id,clean=True)
-        if len(results) == 0:
-            context = battery_results_context(request,bid)
-            context["message"] = "%s does not have any completed results." %template.name
-            return render(request, "experiments/results_dashboard_battery.html", context)
-
-        # If we have results, save updated file for shiny server
-        shiny_input = os.path.abspath("expfactory-explorer/data/%s_data.tsv" %template.exp_id)
-        results.to_csv(shiny_input,sep="\t",encoding="utf-8")
-
-        return HttpResponseRedirect('%s:3838' %settings.DOMAIN_NAME_HTTP)
-    else:
-        context = battery_results_context(request,bid)
-        return render(request, "experiments/results_dashboard_battery.html", context)

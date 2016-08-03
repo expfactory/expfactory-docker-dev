@@ -4,13 +4,13 @@
     <section id="sidebar">
 
     <!-- Batteries -->
-    {% if batteries %}
+    {% if user_batteries %}
     <section>
         <header>
-            <h3>Batteries</h3>
+            <h3>My Batteries</h3>
         </header>
              <ul>
-             {% for battery in batteries %}
+             {% for battery in user_batteries %}
                 <li><a href="{% url 'battery_details' battery.id %}" class="sidebar_button button">{{ battery.name }}</a></li>
              {% endfor %}
             </ul>
@@ -20,19 +20,16 @@
 
     <!-- Experiments -->
     <section>
-        {% if experiments %}
+        {% if user_experiments %}
         <header>
             <h3>Experiments</h3>
         </header>
         {% endif %}
              <ul>
-             {% for experiment in experiments %}
+             {% for experiment in user_experiments %}
                 <li><a href="{% url 'experiment_details' experiment.exp_id %}" class="button sidebar_button">{{ experiment.name }}</a></li>
              {% endfor %}
              <a href="{% url 'new_battery' %}" class="button btn-primary sidebar_button">New Battery</a>
-             {% if request.user.is_superuser %}
-             <a href="{% url 'add_experiment_template' %}" class="button btn-primary sidebar_button">Add Experiment Templates</a>
-             {% endif %}
 
             </ul>
         </section>
