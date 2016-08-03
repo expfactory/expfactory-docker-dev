@@ -63,6 +63,7 @@ INSTALLED_APPS = (
     'expdj.apps.experiments',
     'expdj.apps.result',
     'expdj.apps.users',
+    'expdj.apps.api',
     'social.apps.django_app.default',
     'crispy_forms',
     'polymorphic',
