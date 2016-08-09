@@ -26,8 +26,8 @@ chmod +x /usr/local/bin/docker-compose
 
 if [ ! -d $HOME/expfactory-docker ]
 then
-  git clone https://github.com/expfactory/expfactory-docker
-  cd $HOME/expfactory-docker
+  git clone https://github.com/expfactory/expfactory
+  cd $HOME/expfactory
   docker build -t vanessa/expfactory .
   docker-compose -d up
 fi
