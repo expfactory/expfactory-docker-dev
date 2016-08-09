@@ -51,6 +51,9 @@
 
              {% csrf_token %}
 
+             <!-- This hidden field will hold the repo-->
+             <input type="hidden" class="form-control" name="repo_url"></input>
+
              <main id="table" class="table-editable hide">
                  <div class="panel panel-default">
       
@@ -125,6 +128,14 @@ $(document).ready(function() {
                        $("#table").removeClass("hide");
                        $("#submit").removeClass("hide");
 
+                       // Limit user to installing 5 experiments at once
+                       var max = 5;
+                       var checkboxes = $('input[type="checkbox"]');
+
+                       checkboxes.change(function(){
+                           var current = checkboxes.filter(':checked').length;
+                           checkboxes.filter(':not(:checked)').prop('disabled', current >= max);
+                       });
 
                    } else {
 
@@ -191,14 +202,20 @@ $(document).ready(function() {
     $("#repo").change(function(){
         var selected_repo = $("#repo").val()
 
+        // Hidden input set to the repo name
+        $('input[name="repo_url"]').val(selected_repo);
+
         // Function to retrieve experiments
-        var url = "/routes/repos/view?url=" + encodeURIComponent(selected_repo)
+        var url = "/routes/repos/view?url=" + encodeURIComponent(selected_repo);
         get_experiments(url);
     });
 
     // When custom repo is searched, retrieve valid experiments
     $("#search_repo").click(function(){
         var selected_repo = $("#custom_repo").val()
+
+        // Hidden input set to the repo name
+        $('input[name="repo_url"]').val(selected_repo);
 
         // Function to retrieve experiments
         var url = "/routes/repos/view?url=" + encodeURIComponent(selected_repo)

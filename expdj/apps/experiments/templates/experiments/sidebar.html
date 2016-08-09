@@ -29,7 +29,9 @@
              {% for experiment in user_experiments %}
                 <li><a href="{% url 'experiment_details' experiment.exp_id %}" class="button sidebar_button">{{ experiment.name }}</a></li>
              {% endfor %}
+             {% if request.user.is_authenticated %}
              <a href="{% url 'new_battery' %}" class="button btn-primary sidebar_button">New Battery</a>
+             {% endif %}
 
             </ul>
         </section>

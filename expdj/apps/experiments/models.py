@@ -81,7 +81,7 @@ class Experiment(models.Model):
     '''an experiment is an isolated folder with files to be chosen and customized by researchers into Experiments, and deployed in batteries
     fields correspond with a subset in the config.json
     '''
-    exp_id = models.CharField(primary_key=True, max_length=200, null=False, blank=False)
+    exp_id = models.CharField(max_length=200, null=False, blank=False)
     name = models.CharField(max_length=500,help_text="name of the experiment",unique=True)
     time = models.IntegerField()
     reference = models.CharField(max_length=500,help_text="reference or paper associated with the experiment",unique=False)
@@ -92,13 +92,15 @@ class Experiment(models.Model):
 
     def __meta__(self):
         ordering = ["name"]
+        unique_together = (("battery", "exp_id"),)
+
 
     def __str__(self):
         return self.name
 
     # Get the url for an experiment
     def get_absolute_url(self):
-        return_cid = self.exp_id
+        return_cid = self.id
         return reverse('experiment_details', args=[str(return_cid)])
 
 

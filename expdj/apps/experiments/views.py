@@ -5,6 +5,7 @@ import json
 import numpy
 import os
 import pandas
+import pickle
 import re
 import shutil
 import uuid
@@ -27,6 +28,8 @@ from django.shortcuts import (
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
+from expdj.apps.experiments.utils import install_experiments
+
 from expdj.apps.main.views import google_auth_view
 from expdj.apps.experiments.forms import (
     ExperimentForm, BatteryForm
@@ -34,11 +37,7 @@ from expdj.apps.experiments.forms import (
 from expdj.apps.experiments.models import (
     Experiment, Battery
 )
-from expdj.apps.experiments.utils import (
-    get_experiment_selection, install_experiments, update_credits, 
-    make_results_df, get_battery_results, get_experiment_type, remove_keys, 
-    complete_survey_result, select_experiments
-)
+
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT,DOMAIN_NAME
 import expdj.settings as settings
 from expdj.apps.users.models import User
@@ -156,7 +155,7 @@ def view_experiment(request, eid, bid=None):
 
 # View a battery
 @login_required
-def view_battery(request, bid):
+def view_battery(request, bid,message=None):
     battery = get_battery(bid,request)
 
     # Generate anonymous link
@@ -174,6 +173,9 @@ def view_battery(request, bid):
                'delete_permission':delete_permission,
                'anon_link':anon_link,
                'gmail_link':gmail_link}
+
+    if message != None:
+        context['message'] = message
 
     return render(request,'batteries/battery_details.html', context)
 
@@ -198,6 +200,7 @@ def batteries_view(request,uid=None):
                "title":title}
 
     return render(request, 'batteries/all_batteries.html', context)
+
 
 # Errors and Messages ----------------------------------------------------------
 def enable_cookie_view(request):
@@ -564,39 +567,6 @@ def sync(request,rid=None):
 
 #### EDIT/ADD/DELETE ###################################################
 
-# General install functions -----------------------------------------------------
-@login_required
-def add_new_template(request,template_type):
-    '''add_new_template
-    View for installing new survey, game, or experiment
-    '''
-    new_selection = get_experiment_selection(template_type)
-    template = "%s/add_%s_template.html" %(template_type,template_type[:-1])
-    current_experiments = ExperimentTemplate.objects.all()
-    tags = [e.exp_id for e in current_experiments]
-    newselection = [e for e in new_selection if e["exp_id"] not in tags]
-    context = {"newtemplates": newselection,
-               "experiments": current_experiments}
-    return render(request, template, context)
-
-@login_required
-def save_new_template(request,template_type):
-    '''save_new_template
-    view for actually adding new surveys, experiments, or games (files, etc) to application and database
-    '''
-    newtemplates = request.POST.keys()
-    new_selection = get_experiment_selection(template_type)
-    selected_experiments = [e["exp_id"] for e in new_selection if e["exp_id"] in newtemplates]
-    errored = install_experiments(experiment_tags=selected_experiments,repo_type=template_type)
-    if len(errored) > 0:
-        message = "The %s %s did not install successfully." %(template_type,",".join(errored))
-    else:
-        message = "%s installed successfully." %(template_type)
-    experiments = ExperimentTemplate.objects.all()
-    context = {"experiments":experiments,
-               "message":message}
-    return render(request, "experiments/all_experiments.html", context)
-
 # Install Templates ----------------------------------------------------------
 
 @login_required
@@ -689,48 +659,19 @@ def save_experiment(request,bid):
     '''save_experiment
     save experiment and custom details for battery
     '''
+    battery = get_battery(bid,request)
+
     if request.method == "POST":
-        vars = request.POST.keys()
-        battery = get_battery(bid,request)
-        template = get_experiment_template(request.POST["experiment"],request)
-        expression = re.compile("[0-9]+")
-        experiment_vids = numpy.unique([expression.findall(x)[0] for x in vars if expression.search(x)]).tolist()
-
-        # Create a credit condition for each experiment variable
-        credit_conditions = []
-        include_bonus = False
-        include_catch = False
-
-        for vid in experiment_vids:
-            # Assume that adding the credit condition means the user wants them turned on
-            if int(vid) == template.performance_variable.id:
-                include_bonus = True
-            if int(vid) == template.rejection_variable.id:
-                include_catch = True
-            experiment_variable = ExperimentVariable.objects.filter(id=vid)[0]
-            variable_value = request.POST["val%s" %(vid)] if "val%s" %(vid) in vars else None
-            variable_operator = request.POST["oper%s" %(vid)] if "oper%s" %(vid) in vars else None
-            variable_amount = request.POST["amt%s" %(vid)] if "amt%s" %(vid) in vars else None
-            credit_condition,_ = CreditCondition.objects.update_or_create(variable=experiment_variable,
-                                                                          value=variable_value,
-                                                                          operator=variable_operator,
-                                                                          amount=variable_amount)
-            credit_condition.save()
-            credit_conditions.append(credit_condition)
-
-        # Create the experiment to add to the battery
-        experiment = Experiment.objects.create(template=template,
-                                               include_bonus=include_bonus,
-                                               include_catch=include_catch)
-        experiment.save()
-        experiment.credit_conditions=credit_conditions
-        experiment.save()
-
-        # Add to battery, will replace old version if it exists
-        current_experiments = [e for e in battery.experiments.all() if e.template.exp_id not in template.exp_id]
-        current_experiments.append(experiment)
-        battery.experiments = current_experiments
-        battery.save()
+        contenders = request.POST.keys()
+        
+        # Get the repo_url and requests experiments
+        repo_url = request.POST.get("repo_url",None)
+        expression = re.compile("^EXPERIMENT_")
+        experiment_ids = [x.replace("EXPERIMENT_","") for x in contenders if expression.search(x)]
+        
+        if repo_url != None and len(experiment_ids)>0:
+            message = install_experiments(battery,repo_url,experiment_ids)     
+        return view_battery(request, bid,message=message)
 
     return HttpResponseRedirect(battery.get_absolute_url())
 

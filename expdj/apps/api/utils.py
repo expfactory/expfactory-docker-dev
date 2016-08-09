@@ -39,11 +39,13 @@ def download_repos(repos,tmpdir=None):
     return tmpdir
 
 
-def get_experiment_selection(repo_urls):
+def get_experiment_selection(repo_urls,tmpdir=None,remove_tmp=True):
     '''get_experiment_selection will return a list of valid experiments from a github repo
     :param repo_urls: a list of github repo urls
+    :param tmpdir: provide a custom temporary directory, will be generated if not provided
+    :param remove_tmp: delete the temporary directory at finish (default True)
     '''
-    tmpdir = download_repos(repo_urls)
+    tmpdir = download_repos(repo_urls,tmpdir=tmpdir)
     # Get all experiments in subfolders
     subfolders = glob("%s/*" %tmpdir)
     experiments = []
@@ -51,5 +53,6 @@ def get_experiment_selection(repo_urls):
         new_experiments = get_experiments(subfolder,load=True,warning=False)    
         experiments = experiments + new_experiments
     experiments = [x[0] for x in experiments]
-    shutil.rmtree(tmpdir)
+    if remove_tmp == True:
+        shutil.rmtree(tmpdir)
     return experiments
