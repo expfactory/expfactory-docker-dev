@@ -150,9 +150,3 @@ If your provider (eg aws) provides you with a certificate, you can add it to `/e
           }
       }
 
-
-### Installing expfactory-battery
-Finally, you will need to install the battery files into `static` in the expfactory-docker folder (which is mapped to /var/www/static) and you can do this by running the script [scripts/download_battery.py](scripts/download_battery.py) from the base folder:
-
-      cd $HOME/expfactory-docker
-      python scripts/download_battery.py
