@@ -32,7 +32,7 @@ class Battery(models.Model):
     contributors = models.ManyToManyField(User,related_name="battery_contributors",related_query_name="contributor", blank=True,help_text="Select other Experiment Factory users to add as contributes to the battery.  Contributors can edit and deploy the battery.",verbose_name="Contributors")
     add_date = models.DateTimeField('date published', auto_now_add=True)
     modify_date = models.DateTimeField('date modified', auto_now=True)
-    maximum_time = models.IntegerField(help_text="Maximum number of minutes for the battery to endure.", null=False, verbose_name="Maxiumum time", blank=False)
+    maximum_time = models.IntegerField(help_text="Maximum number of minutes for the battery to endure.", null=True, verbose_name="Maxiumum time", blank=True)
     active = models.BooleanField(choices=((False, 'Inactive'),
                                           (True, 'Active')),
                                            default=True,verbose_name="Active")

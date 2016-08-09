@@ -1,4 +1,4 @@
-from expdj.apps.experiments.models import Experiment
+from expdj.apps.experiments.models import Experiment, Battery
 from expdj.apps.api.utils import get_experiment_selection
 from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
 from expfactory.vm import custom_battery_download
