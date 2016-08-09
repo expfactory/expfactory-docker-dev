@@ -167,12 +167,14 @@ def view_battery(request, bid,message=None):
     # Determine permissions for edit and deletion
     edit_permission = check_battery_edit_permission(request,battery)
     delete_permission = check_battery_edit_permission(request,battery)
+    experiments = Experiment.objects.filter(battery=battery)
 
     context = {'battery': battery,
                'edit_permission':edit_permission,
                'delete_permission':delete_permission,
                'anon_link':anon_link,
-               'gmail_link':gmail_link}
+               'gmail_link':gmail_link,
+               'experiments':experiments}
 
     if message != None:
         context['message'] = message
