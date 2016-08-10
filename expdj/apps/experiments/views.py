@@ -600,34 +600,6 @@ def edit_experiment_template(request,eid=None):
                "experiment":experiment}
     return render(request, "experiments/edit_experiment_template.html", context)
 
-# Delete an experiment
-@login_required
-def delete_experiment_template(request, eid, do_redirect=True):
-    experiment = get_experiment_template(eid,request)
-    experiment_instances = Experiment.objects.filter(template=experiment)
-    experiment_type = get_experiment_type(experiment)
-    if check_experiment_edit_permission(request):
-        # Static Files
-        [e.delete() for e in experiment_instances]
-        static_files_dir = os.path.join(media_dir,experiment_type,experiment.exp_id)
-        if os.path.exists(static_files_dir):
-            shutil.rmtree(static_files_dir)
-        # delete associated results
-        results = Result.objects.filter(experiment=experiment)
-        [r.delete() for r in results]
-        # Cognitive Atlas Task
-        task = experiment.cognitive_atlas_task
-        try:
-            if experiment.cognitive_atlas_task.experiment_set.count() == 1:
-                # We might want to delete concepts too? Ok for now.
-                task.delete()
-        except:
-            pass
-        experiment.delete()
-
-    if do_redirect == True:
-        return redirect('experiments')
-
 
 # Experiments ----------------------------------------------------------
 
@@ -764,11 +736,6 @@ def remove_experiment(request,bid,eid):
    battery = get_battery(bid,request)
    experiment = get_experiment(eid,request)
    if check_battery_edit_permission(request,battery):
-       battery.experiments = [x for x in battery.experiments.all() if x.id != experiment.id]
-   battery.save()
-
-   # If experiment is not linked to other batteries, delete it
-   if len(Battery.objects.filter(experiments__id=experiment.id)) == 0:
        experiment.delete()
    return HttpResponseRedirect(battery.get_absolute_url())
 
