@@ -84,7 +84,7 @@ def install_experiments(battery,repo_url,experiment_ids):
     experiment_folders = [x for x in experiment_folders if x in existing_folders]
 
     # For each experiment folder, create an experiment object, and save files to user static
-    install_dir = "%s/experiments/%s" %(media_dir,battery.id)
+    install_dir = battery.get_install_dir()
     if not os.path.exists(install_dir):
         os.mkdir(install_dir)
 

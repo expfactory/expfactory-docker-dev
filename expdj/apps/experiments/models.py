@@ -1,5 +1,6 @@
 import collections
 import operator
+import os
 
 from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
 
