@@ -736,6 +736,10 @@ def remove_experiment(request,bid,eid):
    battery = get_battery(bid,request)
    experiment = get_experiment(eid,request)
    if check_battery_edit_permission(request,battery):
+       battery_dir = battery.get_install_dir()
+       experiment_dir = "%s/%s" %(battery_dir,experiment.id)
+       if os.path.exists(experiment_dir):
+           shutil.rmtree(experiment_dir) 
        experiment.delete()
    return HttpResponseRedirect(battery.get_absolute_url())
 
@@ -829,9 +833,10 @@ def delete_battery(request, bid):
     battery = get_battery(bid,request)
     delete_permission = check_battery_delete_permission(request,battery)
     if delete_permission==True:
-        hits = HIT.objects.filter(battery=battery)
-        [h.delete() for h in hits]
-        results = Result.objects.filter(battery=battery)
-        [r.delete() for r in results]
+        install_dir = battery.get_install_dir()
+        # Delete associated experiments
+        [e.delete() for e in battery.experiment_set.all()]
+        if os.path.exists(install_dir):
+            shutil.rmtree(install_dir)
         battery.delete()
     return redirect('batteries')

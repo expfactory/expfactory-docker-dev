@@ -1,5 +1,4 @@
 from expdj.apps.experiments.models import Experiment
-from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
 from expfactory.experiment import get_experiments
 from expfactory.utils import copy_directory
 from glob import glob

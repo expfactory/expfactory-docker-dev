@@ -1,6 +1,8 @@
 import collections
 import operator
 
+from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
+
 from guardian.shortcuts import assign_perm, get_users_with_perms, remove_perm
 from jsonfield import JSONField
 from polymorphic.models import PolymorphicModel
@@ -13,6 +15,7 @@ from django.db import models
 from django.db.models import Q, DO_NOTHING
 from django.db.models.signals import m2m_changed
 
+media_dir = os.path.join(BASE_DIR,MEDIA_ROOT)
 
 class Battery(models.Model):
     '''A battery is a collection of experiment templates'''
@@ -55,6 +58,9 @@ class Battery(models.Model):
                                            (True, 'Private')),
                                             default=False,verbose_name="Private")
 
+    def get_install_dir(self):
+        install_dir = "%s/experiments/%s" %(media_dir,self.id)
+        return install_dir 
 
     def get_absolute_url(self):
         return_cid = self.id
@@ -65,6 +71,12 @@ class Battery(models.Model):
 
     def save(self, *args, **kwargs):
         super(Battery, self).save(*args, **kwargs)
+        install_dir = self.get_install_dir()
+
+        # Create the battery folder if it doesn't exist
+        if not os.path.exists(install_dir):
+            os.mkdir(install_dir)       
+
         assign_perm('del_battery', self.owner, self)
         assign_perm('edit_battery', self.owner, self)
 
@@ -93,7 +105,6 @@ class Experiment(models.Model):
     def __meta__(self):
         ordering = ["name"]
         unique_together = (("battery", "exp_id"),)
-
 
     def __str__(self):
         return self.name
