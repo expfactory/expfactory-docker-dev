@@ -125,7 +125,8 @@ def install_experiments(battery,repo_url,experiment_ids):
             output_folder = "%s/%s" %(install_dir,experiment["exp_id"])
             success = install_experiment_static(experiment=new_experiment,
                                                 to_dir=output_folder,
-                                                from_dir=experiment_folder)
+                                                from_dir=experiment_folder,
+                                                version="%s\n%s" %(repo_url,commit))
             if success == False:
                 errored_experiments.append(experiment['exp_id'])
       
@@ -140,7 +141,7 @@ def install_experiments(battery,repo_url,experiment_ids):
     return message
 
 
-def install_experiment_static(experiment,to_dir,from_dir,update=True):
+def install_experiment_static(experiment,to_dir,from_dir,update=True,version=None):
     '''install_experiment_static will install an experiment object static files to
     the battery static folder. In the case of a special expfactory template (survey, experiment,
     or game) the template is rendered and then saved. If successful, returns True, otherwise False.
@@ -149,6 +150,7 @@ def install_experiment_static(experiment,to_dir,from_dir,update=True):
     :param from_dir: the temporary directory
     :param remove_tmp: remove the temporary experiment folder when finished
     :param update: if the experiment files exist, remove them and install again (an update)
+    :param version: if specified, will write a version id to the folder in file VERSION
     '''
     if os.path.exists(to_dir):
         if update == True:
@@ -173,6 +175,9 @@ def install_experiment_static(experiment,to_dir,from_dir,update=True):
         index_html = template.render(context)
         index_file = "%s/index.html" %(to_dir)
         index_file = write_template(index_html,index_file)
+    # If provided, write the version variable to the folder
+    if version != None:
+        write_template(version,"%s/VERSION" %(to_dir))
     return True
 
 def write_template(html_snippet,output_file):

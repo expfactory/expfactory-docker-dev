@@ -33,10 +33,10 @@ def send_result(result):
     message.send()
 
 
-def check_battery_dependencies(current_battery, worker_id):
+def check_battery_dependencies(current_battery, worker):
     '''
     check_battery_dependencies looks up all of a workers completed 
-    experiments in a result object and places them in a dictionary 
+    experiments and places them in a dictionary 
 
     organized by battery_id. Each of these buckets of results is
     iterated through to check that every experiment in that battery has
@@ -45,31 +45,24 @@ def check_battery_dependencies(current_battery, worker_id):
     required and restricted batteries to determine if the worker is 
     eligible to attempt the current battery.
     '''
-    worker_results = Result.objects.filter(
-        worker_id = worker_id,
-        completed=True
-    )
+    worker_completed = worker.experiments_completed.all()
     
     worker_result_batteries = {}
-    for result in worker_results:
-        if worker_result_batteries.get(result.battery.id):
-            worker_result_batteries[result.battery.id].append(result)
+    for completed in worker_completed:
+        if worker_result_batteries.get(completed.battery.id):
+            worker_result_batteries[completed.battery.id].append(completed)
         else:
-            worker_result_batteries[result.battery.id] = []
-            worker_result_batteries[result.battery.id].append(result)
+            worker_result_batteries[completed.battery.id] = []
+            worker_result_batteries[completed.battery.id].append(completed)
 
     worker_completed_batteries = []
     for battery_id in worker_result_batteries:
-        result = worker_result_batteries[battery_id]
+        completed = worker_result_batteries[battery_id]
         all_experiments_complete = True
-        result_experiment_list = [x.experiment_id for x in result]
-        try:
-            battery_experiments = Battery.objects.get(id=battery_id).experiments.all()
-        except ObjectDoesNotExist:
-            #  battery may have been removed.
-            continue
+        result_experiment_list = [x.id for x in completed]
+        battery_experiments = Experiment.objects.filter(battery=battery)
         for experiment in battery_experiments:
-            if experiment.template_id not in result_experiment_list:
+            if experiment.id not in result_experiment_list:
                 all_experiments_complete = False
                 break
         if all_experiments_complete:

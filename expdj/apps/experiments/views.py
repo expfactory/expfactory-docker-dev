@@ -37,6 +37,8 @@ from expdj.apps.experiments.forms import (
 from expdj.apps.experiments.models import (
     Experiment, Battery
 )
+from expdj.apps.result.models import get_worker
+from expdj.apps.result.tasks import check_battery_dependencies
 
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT,DOMAIN_NAME
 import expdj.settings as settings
