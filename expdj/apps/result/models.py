@@ -13,11 +13,13 @@ from django.db import models
 import collections
 import datetime
 
+
 class Worker(models.Model):
     id = models.CharField(primary_key=True, max_length=200, null=False, blank=False)
     session_count = models.PositiveIntegerField(default=0,help_text=("The number of one hour sessions completed by the worker."))
     visit_count = models.PositiveIntegerField(default=0,help_text=("The total number of visits"))
     last_visit_time = models.DateTimeField(null=True,blank=True,help_text=("The date and time, in UTC, the Worker last visited"))
+    experiments_completed = models.ManyToManyField(Experiment,blank=True,related_name="completed_experiments",help_text="List of completed experiments")
 
     def __str__(self):
         return "%s" %(self.id)
@@ -27,7 +29,6 @@ class Worker(models.Model):
 
     class Meta:
         ordering = ['id']
-
 
 
 def get_worker(worker_id,create=True):

@@ -1,24 +1,35 @@
 from expdj.apps.experiments.models import Experiment, Battery
 from expdj.apps.api.utils import get_experiment_selection
 from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
-from expfactory.vm import custom_battery_download
-from expfactory.experiment import get_experiments
-from expfactory.survey import export_questions
+
+from expfactory.experiment import get_experiments,load_experiment
+from expfactory.survey import export_questions, generate_survey
 from expfactory.utils import copy_directory
+from expfactory.vm import custom_battery_download
+
 from django.db.models import Min
+from django.template import Context, Template
+from django.template.loader import get_template
+
 from numpy.random import choice
 from datetime import datetime
-from glob import glob
 from git import Repo
-import tempfile
-import shutil
-import random
-import pandas
+from glob import glob
+
 import json
 import os
+import pandas
+import random
 import re
+import shutil
+import tempfile
 
 media_dir = os.path.join(BASE_DIR,MEDIA_ROOT)
+
+EXPERIMENT_ROOT = "%s/experiments" %(media_dir)
+if not os.path.exists(EXPERIMENT_ROOT):
+    os.mkdir(EXPERIMENT_ROOT)
+
 
 # EXPERIMENT FACTORY PYTHON FUNCTIONS #####################################################
 
@@ -112,10 +123,12 @@ def install_experiments(battery,repo_url,experiment_ids):
                 
             # Finally, install the experiment to its folder in the user's battery directory
             output_folder = "%s/%s" %(install_dir,experiment["exp_id"])
-            if os.path.exists(output_folder):
-                shutil.rmtree(output_folder)
-            copy_directory(experiment_folder,output_folder)
-                  
+            success = install_experiment_static(experiment=new_experiment,
+                                                to_dir=output_folder,
+                                                from_dir=experiment_folder)
+            if success == False:
+                errored_experiments.append(experiment['exp_id'])
+      
         except:
             errored_experiments.append(experiment['exp_id'])
 
@@ -127,7 +140,55 @@ def install_experiments(battery,repo_url,experiment_ids):
     return message
 
 
+def install_experiment_static(experiment,to_dir,from_dir,update=True):
+    '''install_experiment_static will install an experiment object static files to
+    the battery static folder. In the case of a special expfactory template (survey, experiment,
+    or game) the template is rendered and then saved. If successful, returns True, otherwise False.
+    :param experiment: the expdj.apps.experiments.models.Experiment
+    :param to_dir: the directory to install to, typically in a battery folder
+    :param from_dir: the temporary directory
+    :param remove_tmp: remove the temporary experiment folder when finished
+    :param update: if the experiment files exist, remove them and install again (an update)
+    '''
+    if os.path.exists(to_dir):
+        if update == True:
+            shutil.rmtree(to_dir)
+        else:
+            # Experiment static install fail, found files and update is not True
+            return False    
+    # Copy all experiment files into the folder
+    copy_directory(from_dir,to_dir)
+    # If the experiment template is special, we need to render the files
+    if experiment.template == "survey":
+        template = get_template("surveys/serve_battery.html")
+        survey = load_experiment(to_dir)
+        # We will make the form action a variable we can render when we render the survey
+        form_action = "{{ form_action }}"
+        runcode,validation = generate_survey(survey,to_dir,form_action=form_action,csrf_token=True)        
+        # This should be the scripts from the config.json {{ experiment_load | safe }}
+        experiment_load = "\n".join(survey[0]["run"])
+        context = Context({"validation":validation,
+                           "run":runcode,
+                           "experiment_load":experiment_load})
+        index_html = template.render(context)
+        index_file = "%s/index.html" %(to_dir)
+        index_file = write_template(index_html,index_file)
+    return True
+
+def write_template(html_snippet,output_file):
+    '''write_template will write an html_snippet to an output_file
+    :param html_snippet: the html to write to file
+    :param output_file: the output file to write to
+    '''
+    filey = open(output_file,'w')
+    filey.write(html_snippet.encode('utf-8'))
+    filey.close()
+    return output_file
+
+
 # EXPERIMENT SELECTION #####################################################################
+
+
 
 def select_random_n(experiments,N):
     '''select_experiments_N

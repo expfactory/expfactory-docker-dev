@@ -803,6 +803,14 @@ def edit_battery(request, bid=None):
                 previous_contribs = set()
                 if form.instance.pk is not None:
                     previous_contribs = set(form.instance.contributors.all())
+                    message = "Battery updated successfully."
+                else:
+                    # If it's a new battery, we need to submit a form to formspree
+                    message = """Battery created successfully! Check your email database to validate the email 
+                                 for use as a database. You will receive a message from formspree."""
+
+                #    https://formspree.io/your@email.com
+
                 battery = form.save(commit=False)
                 battery.save()
 
@@ -811,7 +819,8 @@ def edit_battery(request, bid=None):
                     current_contribs = set(battery.contributors.all())
                     new_contribs = list(current_contribs.difference(previous_contribs))
 
-                return HttpResponseRedirect(battery.get_absolute_url())
+                return view_battery(request,battery.id,message=message)
+
         else:
             if is_owner:
                 form = BatteryForm(instance=battery)

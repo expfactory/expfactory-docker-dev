@@ -1,15 +1,15 @@
-from expdj.apps.experiments.models import Experiment
+
 import ConfigParser
 import datetime
-import pandas
 import json
 import os
+import pandas
+from requests import Session
 
 from django.conf import settings
 
+from expdj.apps.experiments.models import Experiment
 from expdj.settings import BASE_DIR
-
-
 
 # RESULTS UTILS
 def to_dict(input_ordered_dict):

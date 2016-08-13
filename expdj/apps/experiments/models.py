@@ -27,7 +27,9 @@ class Battery(models.Model):
     )
 
     # Name must be unique because anonymous link is generated from hash
-    name = models.CharField(max_length=200, unique = True, null=False, verbose_name="Name of battery")
+    name = models.CharField(max_length=200, unique=True, null=False, verbose_name="Name of battery")
+    email = models.EmailField(verbose_name="Email database",blank=False,null=False,
+                              help_text="All data is sent to a Gmail account, for use as a database. The current limit is 1000/user/month.")
     description = models.TextField(blank=True, null=True)
     consent = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your consent formatting.")
     advertisement = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your advertisement formatting.")
@@ -72,12 +74,6 @@ class Battery(models.Model):
 
     def save(self, *args, **kwargs):
         super(Battery, self).save(*args, **kwargs)
-        install_dir = self.get_install_dir()
-
-        # Create the battery folder if it doesn't exist
-        if not os.path.exists(install_dir):
-            os.mkdir(install_dir)       
-
         assign_perm('del_battery', self.owner, self)
         assign_perm('edit_battery', self.owner, self)
 
@@ -109,6 +105,10 @@ class Experiment(models.Model):
 
     def __str__(self):
         return self.name
+
+    # Get the installation directory of an experiment
+    def get_install_dir(self):
+        return "%s/%s" %(self.battery.get_install_dir(),self.exp_id)
 
     # Get the url for an experiment
     def get_absolute_url(self):

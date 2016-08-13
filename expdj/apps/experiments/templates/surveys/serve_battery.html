@@ -5,9 +5,6 @@
     <meta charset="utf-8" />
     <script src="{% static "js/jquery.min.js"%}"></script>
     <script src="{% static "js/bootstrap.min.js"%}"></script>
-    <script type="text/javascript" src="/static/expdjjs/underscore-min.js"></script>
-    <script type="text/javascript" src="/static/expdjjs/backbone-min.js"></script>
-    <script type="text/javascript" src="/static/expdjjs/expfactory.js"></script>
     {{ experiment_load | safe }}
 </head>
 <body>
@@ -32,14 +29,10 @@
 <script>
 $( document ).ready(function() {
 
-    {% include "experiments/serve_battery_cookie.html" %}
-
-    $("input[name='csrfmiddlewaretoken']").attr("value",csrftoken);
     $("input[name='url']").attr("value",document.URL);
 
-    $("#start_experiment_button").click();
-    expfactory_finished = false;
-
+    //$("#start_experiment_button").click();
+    
     // Basic wizard with progress bar
     $( "#progressbar" ).progressbar();
     $( "#questions" ).wizard({

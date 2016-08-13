@@ -150,3 +150,15 @@ If your provider (eg aws) provides you with a certificate, you can add it to `/e
           }
       }
 
+
+### Installing Experiments
+Generally, any folder with an index.html serving some experiment, and submitting data via a form will work in the Experiment Factory. Your experiment should have a main `index.html` file with the form action to be a variable for substitution:
+
+      <form action="{{ form_action }}" ...>
+      ...
+      </form>
+
+We suggest you take advantage of a [content delivery network](https://cdnjs.com/) (CDN) to serve javascript and style sheets, however any additional files that you might need (images, js, or css) can be included in your experiment directory.
+
+##### Surveys
+You can most easily generate a survey by following our [surveys](https://github.com/expfactory/surveys) example. You just need a `survey.tsv` file with questions, and make sure to specify `survey` as the `template` variable in the config.json. To install a survey, you can Generate a battery, add an experiment to it, and either select "Expfactory Surveys" or your own Github URL with a folder that has a config.json for a survey inside.

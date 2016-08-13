@@ -36,7 +36,7 @@ class BatteryForm(ModelForm):
 
     class Meta:
         model = Battery
-        fields = ('name', 'description','consent','advertisement','instructions','maximum_time',
+        fields = ('name', 'email','description','consent','advertisement','instructions','maximum_time',
                   'active','presentation_order','required_batteries','restricted_batteries','private')
 
     def clean(self):
