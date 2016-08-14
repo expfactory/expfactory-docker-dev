@@ -15,6 +15,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q, DO_NOTHING
 from django.db.models.signals import m2m_changed
+from django.urls import reverse
 
 media_dir = os.path.join(BASE_DIR,MEDIA_ROOT)
 
@@ -64,6 +65,9 @@ class Battery(models.Model):
     def get_install_dir(self):
         install_dir = "%s/experiments/%s" %(media_dir,self.id)
         return install_dir 
+
+    def get_router_url(self):
+        return reverse('battery_router', args=[self.id])
 
     def get_absolute_url(self):
         return_cid = self.id

@@ -28,8 +28,9 @@ from django.shortcuts import (
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
-from expdj.apps.experiments.utils import install_experiments
-
+from expdj.apps.experiments.utils import (
+    install_experiments, select_experiments
+)
 from expdj.apps.main.views import google_auth_view
 from expdj.apps.experiments.forms import (
     ExperimentForm, BatteryForm
@@ -38,6 +39,7 @@ from expdj.apps.experiments.models import (
     Experiment, Battery
 )
 from expdj.apps.result.models import get_worker
+from expdj.apps.result.utils import get_worker_experiments
 from expdj.apps.result.tasks import check_battery_dependencies
 
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT,DOMAIN_NAME
@@ -377,7 +379,6 @@ def serve_battery(request,bid,userid=None):
     # Try to get some info about browser, language, etc.
     browser = "%s,%s" %(request.user_agent.browser.family,request.user_agent.browser.version_string)
     platform = "%s,%s" %(request.user_agent.os.family,request.user_agent.os.version_string)
-    deployment = "docker-local"
 
     # Does the worker have experiments remaining?
     uncompleted_experiments = get_worker_experiments(worker,battery)
@@ -387,17 +388,7 @@ def serve_battery(request,bid,userid=None):
         return render_to_response("messages/worker_sorry.html")
 
     task_list = select_experiments(battery,uncompleted_experiments)
-    experimentTemplate = ExperimentTemplate.objects.filter(exp_id=task_list[0].template.exp_id)[0]
-    experiment_type = get_experiment_type(experimentTemplate)
-    task_list = battery.experiments.filter(template=experimentTemplate)
-
-    # Generate a new results object for the worker, assignment, experiment
-    result,_ = Result.objects.update_or_create(worker=worker,
-                                               experiment=experimentTemplate,
-                                               battery=battery,
-                                               defaults={"browser":browser,"platform":platform})
-    result.save()
-
+    
     context = {"worker_id": worker.id,
                "uniqueId":result.id}
 
@@ -405,49 +396,30 @@ def serve_battery(request,bid,userid=None):
     if experiments_left == 1:
         next_page = "/finished"
 
-    # Determine template name based on template_type
-    template = "%s/serve_battery.html" %(experiment_type)
+    return deploy_battery(battery=battery,
+                          context=context,
+                          task_list=task_list,
+                          next_page=next_page,
+                          experiments_left=experiments_left-1)
 
-    return deploy_battery(
-        deployment="docker-local",
-        battery=battery,
-        experiment_type=experiment_type,
-        context=context,
-        task_list=task_list,
-        template=template,
-        next_page=next_page,
-        result=result,
-        experiments_left=experiments_left-1
-    )
-
-def deploy_battery(deployment, battery, experiment_type, context, task_list, 
-                   template, result, next_page=None, last_experiment=False, 
-                   experiments_left=None):
+def deploy_battery(battery, context, task_list,next_page=None,last_experiment=False,experiments_left=None):
     '''deploy_battery is a general function for returning the final view to deploy a battery
-    :param deployment: either "docker-mturk" or "docker-local"
     :param battery: models.Battery object
-    :param experiment_type: experiments,games,or surveys
     :param context: context, which should already include next_page,
     :param next_page: the next page to navigate to [optional] default is to reload the page to go to the next experiment
     :param task_list: list of models.Experiment instances
-    :param template: html template to render
-    :param result: the result object, experiments.models.Result
-    :param last_experiment: boolean if true will redirect the user to a page to submit the result (for surveys)
     :param experiments_left: integer indicating how many experiments are left in battery.
     '''
     if next_page == None:
         next_page = "javascript:window.location.reload();"
     context["next_page"] = next_page
 
-    # Check the user blacklist status
-    try:
-        blacklist = Blacklist.objects.get(worker=result.worker,battery=battery)
-        if blacklist.active == True:
-            return render_to_response("experiments/blacklist.html")
-    except:
-        pass
-
-    # Get experiment folders
+    # STOPPED HERE - we need to load the templates (index.html) in a static directory!
+    # The issue is that the relative paths in the template are technically a different URL.
+    # Is there a way to specify the base URL for the experiment or survey dynanmically?
+    # eg: /battery/1/serve --> /static/blah/index.html
+    # We by default 
+    
     experiment_folders = [os.path.join(media_dir,experiment_type,x.template.exp_id) for x in task_list]
     context["experiment_load"] = get_load_static(experiment_folders,url_prefix="/")
 

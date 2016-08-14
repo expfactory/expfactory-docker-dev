@@ -27,6 +27,9 @@ ADMINS = (('vsochat', 'vsochat@gmail.com'),)
 
 MANAGERS = ADMINS
 
+# Reply to address for data sent to email
+REPLY_TO = "poldrackExperiments@gmail.com"
+
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 DEBUG = False

@@ -30,6 +30,7 @@ urlpatterns = patterns('',
     url(r'^conditions/(?P<bid>\d+|[A-Z]{8})/(?P<eid>\d+|[A-Z]{8})/(?P<cid>\d+|[A-Z]{8})/remove$',remove_condition,name='remove_condition'),
 
     # Batteries
+    url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/go$', battery_router, name="battery_router"),
     url(r'^batteries/$', batteries_view, name="batteries"),
     url(r'^my-batteries/(?P<uid>\d+|[A-Z]{8})/$', batteries_view, name="batteries"),
     url(r'^batteries/new$',edit_battery,name='new_battery'),

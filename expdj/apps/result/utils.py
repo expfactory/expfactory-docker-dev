@@ -24,17 +24,13 @@ def get_worker_experiments(worker,battery,completed=False):
     a worker has/has not completed for a particular battery
     :param completed: boolean, default False to return uncompleted experiments
     '''
-    from expdj.apps.result.models import Result
-    battery_tags = [x.template.exp_id for x in battery.experiments.all()]
-    worker_experiments = Result.objects.filter(worker=worker,battery=battery)
-    worker_tags = [x.experiment.exp_id for x in worker_experiments if x.completed==True]
+    battery_tags = Experiment.objects.filter(battery=battery)
+    worker_completed = worker.experiments_completed.all()
 
-    if completed==False:
-        experiment_selection = [e for e in battery_tags if e not in worker_tags]
-    else:
-        experiment_selection = [e for e in worker_tags if e in battery_tags]
-    return Experiment.objects.filter(template__exp_id__in=experiment_selection,
-                                     battery_experiments__id=battery.id)
+    if completed==False: # uncompleted experiments
+        return [e for e in battery_tags if e not in worker_completed]
+    else: # completed experiments
+        return [e for e in worker_completed if e in battery_tags]
 
 
 def get_time_difference(d1,d2,format='%Y-%m-%d %H:%M:%S'):

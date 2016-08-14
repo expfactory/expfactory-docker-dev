@@ -3,13 +3,14 @@
   <head>
     <title>The Experiment Factory</title>
     <meta charset="utf-8" />
+    {{ css | safe }}
     <script src="{% static "js/jquery.min.js"%}"></script>
     <script src="{% static "js/bootstrap.min.js"%}"></script>
-    {{ experiment_load | safe }}
+    {{ js | safe }}
 </head>
 <body>
 
-{{run | safe}}
+{{ run | safe }}
 
 <div class="navigation">
     <ul class="clearfix">
@@ -30,7 +31,7 @@
 $( document ).ready(function() {
 
     $("input[name='url']").attr("value",document.URL);
-
+    expfactory_finished = false;
     //$("#start_experiment_button").click();
     
     // Basic wizard with progress bar
