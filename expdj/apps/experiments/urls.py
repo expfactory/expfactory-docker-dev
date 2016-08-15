@@ -28,7 +28,6 @@ urlpatterns = patterns('',
     url(r'^batteries/new$',expv.edit_battery,name='new_battery'),
     url(r'^batteries/add$',expv.add_battery,name='add_battery'),
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/edit$',expv.edit_battery,name='edit_battery'),
-    url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/user$',expv.generate_battery_user,name='generate_battery_user'),
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/$',expv.view_battery, name='battery_details'),
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/delete$',expv.delete_battery,name='delete_battery'),
 

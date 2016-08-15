@@ -316,27 +316,6 @@ def enable_cookie_view(request):
     return render_to_response("experiments/cookie_sorry.html")
 
 
-@login_required
-def generate_battery_user(request,bid):
-    '''add a new user login url to take a battery'''
-
-    battery = get_battery(bid,request)
-    context = {"battery":battery,
-               "domain":settings.DOMAIN_NAME}
-
-    if check_battery_edit_permission(request,battery) == True:
-
-            # Create a user result object
-            userid = uuid.uuid4()
-            worker = get_worker(userid)
-            context["new_user"] = userid
-            worker.save()
-
-            return render_to_response('experiments/generate_battery_user.html', context)
-
-    else:
-            return HttpResponseRedirect(battery.get_absolute_url())
-
 def get_battery_intro(battery,show_advertisement=True):
 
     instruction_forms = []
