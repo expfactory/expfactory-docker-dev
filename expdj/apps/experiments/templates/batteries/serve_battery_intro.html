@@ -1,0 +1,39 @@
+<html>
+{% load static from staticfiles %}
+  <head>
+    <title>The Experiment Factory</title>
+    <meta charset="utf-8" />
+    <script src="{% static "js/jquery.min.js"%}"></script>
+    <script src="{% static "js/bootstrap.min.js"%}"></script>
+
+    <!-- Google Analytics -->
+    {% include "main/google_analytics.html" %}
+
+</head>
+<body>
+
+{% include "batteries/instructions_modal.html" %}
+
+<button id="start_experiment" hidden></button>
+
+<script>
+$(document).ready(function(){
+
+    var complete = "1";
+    $("#next_button").click(function() {
+
+        if (complete == "complete"){
+            window.open("{{ start_url }}")
+        }
+        complete = $("#next_button").attr("data-step")
+    });
+
+    $("#previous_button").click(function() {
+        complete = $("#next_button").attr("data-step")
+    });
+
+});
+</script>
+
+</body>
+</html>

@@ -169,13 +169,14 @@ def install_experiment_static(experiment,battery,to_dir,from_dir,update=True,ver
         # Form action is to submit data to email database via formspree
         form_action = ("https://formspree.io/%s" %(battery.email)).encode('utf-8')
         runcode,validation = generate_survey(survey,to_dir,form_action=form_action,csrf_token=True)
+
         # We want to include hidden fields with experiment factory reply-to address, redirect, and subject
         router_url = "%s%s" %(DOMAIN_NAME,battery.get_router_url(experiment.id))
         hidden_fields = '<input type="text" name="_replyto" placeholder="%s"/>' %(REPLY_TO)
         hidden_fields = '%s<input type="hidden" name="_next" value="%s"/>' %(hidden_fields,router_url)
         hidden_fields = '<input type="hidden" name="_subject" value="[EXPFACTORY][RESULT][%s][%s][%s]"/>' %(hidden_fields,battery.name,experiment.name)
         
-        runcode.replace("{% csrf_token %}",hidden_fields.encode('utf-8'))
+        runcode = runcode.replace("{% csrf_token %}",hidden_fields.encode('utf-8'))
         # static path should be replaced with web path
         url_path = "%s/" %(to_dir.replace(MEDIA_ROOT,MEDIA_URL[:-1])) 
         # prepare static files paths

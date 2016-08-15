@@ -560,6 +560,7 @@ def edit_battery(request, bid=None):
                     message = """Battery created successfully! Check your email database to validate the email 
                                  for use as a database. You will receive a message from formspree."""
 
+                # TODO: need to submit to this URL in view (automatically) when return to page
                 #    https://formspree.io/your@email.com
 
                 battery = form.save(commit=False)
