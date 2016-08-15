@@ -39,7 +39,9 @@ from expdj.apps.experiments.models import (
     Experiment, Battery
 )
 from expdj.apps.result.models import get_worker
-from expdj.apps.result.utils import get_worker_experiments,  complete_survey_result
+from expdj.apps.result.utils import ( 
+    get_worker_experiments,  complete_survey_result, zip_up
+)
 from expdj.apps.result.tasks import check_battery_dependencies, send_result
 
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT,DOMAIN_NAME
@@ -118,39 +120,12 @@ def update_experiment_template(request,eid):
     return render(request, "experiments/all_experiments.html", context)
 
 
-# View a single experiment
-def view_experiment(request, eid, bid=None):
-
-    # Determine permissions for edit and deletion
-    context = dict()
-    context["edit_permission"] = check_experiment_edit_permission(request)
-    context["delete_permission"] = context["edit_permission"]
-
-    # View an experiment associated with a battery
-    if bid:
-        experiment = get_experiment(eid,request)
-        battery = get_battery(bid,request)
-        context["edit_permission"] = check_battery_edit_permission(request,battery)
-        context["delete_permission"] = context["edit_permission"] # same for now
-        template = 'experiments/experiment_details.html'
-
-    # An experiment template
-    else:
-        experiment = get_experiment_template(eid,request)
-        template = 'experiments/experiment_template_details.html'
-        context["experiment_type"] = get_experiment_type(experiment)
-        battery = None
-
-    context["battery"] = battery
-    context["experiment"] = experiment
-
-    return render_to_response(template, context)
-
 # All experiments for the user
 def experiments_view(request):
     experiments = Experiment.objects.filter(battery__private=False)
     context = {'experiments': experiments}
     return render(request, 'experiments/all_experiments.html', context)
+
 
 # Preview and Serving ----------------------------------------------------------
 
@@ -261,6 +236,21 @@ def remove_experiment(request,bid,eid):
    return HttpResponseRedirect(battery.get_absolute_url())
 
 
+@login_required
+def download_experiment(request,eid):
+    '''download_experiment downloads an experiment folder for the user
+    :param eid: the experiment id 
+    '''
+    experiment = get_experiment(eid,request)
+    if check_battery_edit_permission(request,experiment.battery):
+        zipped = zip_up(experiment)
+        zip_name = "%s_%s" %(experiment.exp_id,experiment.id)
+        response = HttpResponse(zipped.getvalue(), content_type="application/x-zip-compressed")
+        response['Content-Disposition'] = 'attachment; filename=%s' % zip_name
+        return response
+    return HttpResponseRedirect(experiment.battery.get_absolute_url())
+        
+
 ### BATTERIES #########################################################
 
 # get battery with experiments
@@ -272,6 +262,7 @@ def get_battery(bid,request):
         raise Http404
     else:
         return battery
+
 
 # View a battery
 @login_required
@@ -603,6 +594,7 @@ def edit_battery(request, bid=None):
         return render(request, "experiments/edit_battery.html", context)
     else:
         return redirect("batteries")
+
 
 # Delete a battery
 @login_required

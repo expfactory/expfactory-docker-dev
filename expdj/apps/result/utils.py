@@ -3,6 +3,10 @@ import datetime
 import json
 import os
 import pandas
+import shutil
+import StringIO
+import tempfile
+import zipfile
 
 from django.conf import settings
 
@@ -83,3 +87,26 @@ def complete_survey_result(experiment,taskdata):
            complete_question = {"response":quesval[0]}
         final_data[queskey] = complete_question
     return final_data
+
+
+def zip_up(experiment):
+    '''zip_up will zip up an experiment folder into a package (.zip)
+    for the user to download. It is returned as a StringIO object
+    :param experiment_folder: the experiment folder to zip up
+    '''
+    experiment_folder = experiment.get_install_dir()
+
+    # Make a new archive    
+    s = StringIO.StringIO()   
+    zf = zipfile.ZipFile(s, "w", zipfile.ZIP_DEFLATED, allowZip64=True)
+
+    # Write files to zip, depending on type
+    for root, dirs, files in os.walk(experiment_folder):
+        for filey in files:
+            subdirectory = root.split(experiment.exp_id)[-1]
+            archive_folder = "%s/%s" %(subdirectory,filey)
+            zf.write(os.path.join(root, filey),archive_folder)
+
+    # Close the zip file    
+    zf.close()
+    return s

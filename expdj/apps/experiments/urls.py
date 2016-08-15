@@ -12,9 +12,9 @@ urlpatterns = patterns('',
 
     # Experiments in Batteries
     url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/add$',expv.add_experiment,name='add_experiment'),
+    url(r'^experiments/(?P<eid>\d+|[A-Z]{8})/export$',expv.download_experiment,name='download_experiment'),
     url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/save$',expv.save_experiment,name='save_experiment'),
     url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/(?P<eid>\d+|[A-Z]{8})/customize$',expv.edit_experiment,name='edit_experiment'),
-    url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/(?P<eid>\d+|[A-Z]{8})/view$',expv.view_experiment, name='experiment_details'),
     url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/(?P<eid>\d+|[A-Z]{8})/order$',expv.change_experiment_order, name='change_experiment_order'),
     url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/(?P<eid>\d+|[A-Z]{8})/remove$',expv.remove_experiment,name='remove_experiment'),
 
