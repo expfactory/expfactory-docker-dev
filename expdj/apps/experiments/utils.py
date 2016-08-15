@@ -1,7 +1,7 @@
 from expdj.apps.experiments.models import Experiment, Battery
 from expdj.apps.api.utils import get_experiment_selection
 from expdj.settings import (
-   STATIC_ROOT,BASE_DIR,MEDIA_ROOT,MEDIA_URL,REPLY_TO
+   STATIC_ROOT,BASE_DIR,MEDIA_ROOT,MEDIA_URL,REPLY_TO, DOMAIN_NAME
 )
 from expfactory.experiment import get_experiments,load_experiment
 from expfactory.survey import export_questions, generate_survey
@@ -166,16 +166,16 @@ def install_experiment_static(experiment,battery,to_dir,from_dir,update=True,ver
     if experiment.template == "survey":
         template = get_template("surveys/serve_battery.html")
         survey = load_experiment(to_dir)
-        # We will make the form action a variable we can render when we render the survey
-        form_action = "{{ form_action }}"
+        # Form action is to submit data to email database via formspree
+        form_action = ("https://formspree.io/%s" %(battery.email)).encode('utf-8')
         runcode,validation = generate_survey(survey,to_dir,form_action=form_action,csrf_token=True)
         # We want to include hidden fields with experiment factory reply-to address, redirect, and subject
-        router_url = battery.get_router_url()
+        router_url = "%s%s" %(DOMAIN_NAME,battery.get_router_url(experiment.id))
         hidden_fields = '<input type="text" name="_replyto" placeholder="%s"/>' %(REPLY_TO)
         hidden_fields = '%s<input type="hidden" name="_next" value="%s"/>' %(hidden_fields,router_url)
-        hidden_fields = '<input type="hidden" name="_subject" value="[EXPFACTORY][RESULT][%s][%s]"/>' \
-                         %(hidden_fields,battery.name,experiment.name)
+        hidden_fields = '<input type="hidden" name="_subject" value="[EXPFACTORY][RESULT][%s][%s][%s]"/>' %(hidden_fields,battery.name,experiment.name)
         
+        runcode.replace("{% csrf_token %}",hidden_fields.encode('utf-8'))
         # static path should be replaced with web path
         url_path = "%s/" %(to_dir.replace(MEDIA_ROOT,MEDIA_URL[:-1])) 
         # prepare static files paths

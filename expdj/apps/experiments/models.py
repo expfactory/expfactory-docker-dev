@@ -2,7 +2,7 @@ import collections
 import operator
 import os
 
-from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT
+from expdj.settings import STATIC_ROOT,BASE_DIR,MEDIA_ROOT,MEDIA_URL
 
 from guardian.shortcuts import assign_perm, get_users_with_perms, remove_perm
 from jsonfield import JSONField
@@ -15,7 +15,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q, DO_NOTHING
 from django.db.models.signals import m2m_changed
-from django.urls import reverse
 
 media_dir = os.path.join(BASE_DIR,MEDIA_ROOT)
 
@@ -63,11 +62,25 @@ class Battery(models.Model):
                                             default=False,verbose_name="Private")
 
     def get_install_dir(self):
+        '''get_install_dir returns the battery install directory (with experiment folders)
+        on the server.
+        '''
         install_dir = "%s/experiments/%s" %(media_dir,self.id)
         return install_dir 
 
-    def get_router_url(self):
-        return reverse('battery_router', args=[self.id])
+    def get_serve_url(self):
+        '''get_serve_url returns the base battery url from which experiment folders 
+        are statically served (eg, /static/experiments/[self.id]/[expid]
+        '''
+        install_url = "%sexperiments/%s" %(MEDIA_URL,self.id)
+        return install_url
+
+    def get_router_url(self,experiment_id=None):
+        if experiment_id==None:
+            # Log an experiment as completed first
+            return reverse('battery_router', args=[self.id])
+        # Just route to an uncompleted one
+        return reverse('battery_router', args=[self.id,experiment_id])
 
     def get_absolute_url(self):
         return_cid = self.id
@@ -113,6 +126,10 @@ class Experiment(models.Model):
     # Get the installation directory of an experiment
     def get_install_dir(self):
         return "%s/%s" %(self.battery.get_install_dir(),self.exp_id)
+
+    def serve_url(self):
+        battery_url = self.battery.get_serve_url()
+        return "%s/%s/" %(battery_url,self.exp_id)
 
     # Get the url for an experiment
     def get_absolute_url(self):

@@ -140,6 +140,10 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 WSGI_APPLICATION = 'expdj.wsgi.application'
 
+# Session variables for storing worker ids
+SESSION_EXPIRE_AT_BROWSER_CLOSE=False
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 

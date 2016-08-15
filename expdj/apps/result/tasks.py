@@ -60,7 +60,7 @@ def check_battery_dependencies(current_battery, worker):
         completed = worker_result_batteries[battery_id]
         all_experiments_complete = True
         result_experiment_list = [x.id for x in completed]
-        battery_experiments = Experiment.objects.filter(battery=battery)
+        battery_experiments = Experiment.objects.filter(battery=current_battery)
         for experiment in battery_experiments:
             if experiment.id not in result_experiment_list:
                 all_experiments_complete = False

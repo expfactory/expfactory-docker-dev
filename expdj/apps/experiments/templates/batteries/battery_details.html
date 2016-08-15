@@ -130,7 +130,6 @@
           </table>
           {% if edit_permission %}
           <a style="position:absolute;left:20px;margin-top:50px" class='button btn-primary' href='{% url 'add_experiment' battery.id %}'>Add Experiments</a>
-          <a style="left:0px;;margin-top:50px" class='button btn-primary' href='{% url 'modify_experiment' battery.id %}'>Edit Experiments</a>
           {% endif %}
          {% else %}
              {% if edit_permission %}
@@ -209,6 +208,12 @@ $(document).ready(function() {
     $('#delete_battery').click(function(e) {
       return confirm("Are you sure you want to delete the battery? This will remove all associated experiments!");
     });
+  
+    // If the battery has experiments, this is what user should see first
+    {% if experiments %}
+    $('a[href="#experiments"]').tab('show');
+    {% endif %}
+
 } );
 </script>
 

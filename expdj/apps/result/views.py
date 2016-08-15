@@ -18,7 +18,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from expdj.apps.experiments.models import Battery
 from expdj.apps.experiments.views import (check_battery_edit_permission, 
-     get_battery_intro, deploy_battery)
+     get_battery_intro)
 from expdj.apps.experiments.utils import get_experiment_type, select_experiments
 from expdj.apps.result.forms import WorkerContactForm
 from expdj.apps.result.models import Worker, get_worker
