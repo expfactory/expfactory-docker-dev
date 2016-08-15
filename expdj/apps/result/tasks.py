@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import numpy
 import os
+from sendgrid.helpers.mail import *
+from sendgrid import *
 
 from celery import shared_task, Celery
 
@@ -12,6 +14,9 @@ from django.utils import timezone
 from expdj.apps.experiments.models import Experiment, Battery
 from expdj.apps.experiments.utils import get_experiment_type
 from expdj.apps.result.models import get_worker
+from expdj.apps.result.utils import generate_email
+from expdj.settings import REPLY_TO, DOMAIN_NAME
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'expdj.settings')
 app = Celery('expdj')
@@ -19,17 +24,51 @@ app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 @shared_task
-def send_result(result):
-    subject = "[expfactory][result]5"
-    body = "This is an expriment factory result"
-    from_email = "noreply@expfactory.org"
-    to_email = ["vsochat@gmail.com"]
+def send_result(eid,wid,data):
+    '''send_result will use the sendgrid email API to send a result object to a worker. If there
+    is an error, the user will be emailed instead using expfactory email, and the battery status
+    will be made inactive.
+    :param eid: the experiment id
+    :param data: the data object (json)
+    '''
+    try:
+        # Retrieve worker, experiment, and battery
+        worker = get_worker(wid)
+        experiment = Experiment.objects.get(id=eid)
+        battery = experiment.battery
+
+        # Generate email and send with sendgrid
+        email = generate_email(battery,experiment,worker,data)
+        sg = SendGridAPIClient(apikey=battery.sendgrid)
+        response = sg.client.mail.send.post(request_body=email)
+        if response.status_code != 202:
+            failed_send(battery,experiment,worker)
+    except:
+        failed_send(battery,experiment,worker)
+
+
+def failed_send(battery,experiment,worker):
+    '''If the battery fails to send, we send the user the information and disable the battery.
+    The site admin is also notified.
+    '''
+    # Deactivate the battery
+    battery.active = False
+    battery.save()
+
+    # Notify the user
+    subject = "[EXPFACTORY][ERROR] The Experiment Factory Email Sending Error"
+    body = """Hello!\n\n Your recent attempt to send an Experiment Factory result email 
+              using the SendGrid API was not successful for participant with id %s and 
+              experiment %s. To prevent loss of future data, we have temporarily 
+              deactivated your battery. Please check your SendGrid account quota and API 
+              Key at app.sendgrid.com, and then re-activate your battery at %s\%s. 
+              Please reach out to us if you have any questions!\n\nBest,\n\n
+              The Experiment Factory Team.""" %(worker.id,experiment.name,DOMAIN_NAME,battery.get_absolute_url())
+    to_email = [battery.owner.email,battery.email]
     message = EmailMessage(subject=subject,
                            body=body,
-                           from_email=from_email,
-                           to=to_email,
-                           headers={'result-id': '12'})
-    message.attach("attachment.json", '{"hello":"hello"}', "application/json")
+                           from_email=REPLY_TO,
+                           to=to_email)
     message.send()
 
 

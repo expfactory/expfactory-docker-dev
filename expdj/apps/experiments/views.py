@@ -26,7 +26,7 @@ from django.shortcuts import (
     get_object_or_404, render_to_response, render, redirect
 )
 from django.utils import timezone
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect, csrf_exempt
 
 from expdj.apps.experiments.utils import (
     install_experiments, select_experiments
@@ -39,8 +39,8 @@ from expdj.apps.experiments.models import (
     Experiment, Battery
 )
 from expdj.apps.result.models import get_worker
-from expdj.apps.result.utils import get_worker_experiments
-from expdj.apps.result.tasks import check_battery_dependencies
+from expdj.apps.result.utils import get_worker_experiments,  complete_survey_result
+from expdj.apps.result.tasks import check_battery_dependencies, send_result
 
 from expdj.settings import BASE_DIR,STATIC_ROOT,MEDIA_ROOT,DOMAIN_NAME
 import expdj.settings as settings
@@ -474,14 +474,13 @@ def dummy_battery(request,bid):
                           template=template,
                           result=result)
 
-
 # Route the user to the next experiment
+@csrf_exempt
 def battery_router(request,bid,eid=None):
     '''battery_router will direct the user (determined from the session variable) to an uncompleted experiment. If an
     experiment id is provided, the redirect is being sent from a completed experiment, and we log the experiment as completed
     first. 
     '''
-
     # No robots allowed!
     if request.user_agent.is_bot:
         return render_to_response("messages/robot_sorry.html")
@@ -492,14 +491,28 @@ def battery_router(request,bid,eid=None):
         return render_to_response("messages/invalid_id_sorry.html")
     worker = get_worker(userid)
 
-    # If an experiment id is provided, it means that an experiment was finished, and we update the record
+    # Retrieve the battery based on the bid
     battery = get_battery(bid,request)
-    if eid != None:
+
+    # If there is a post, we are finishing an experiment and sending data
+    if request.method == "POST" and eid != None:
+
         experiment = get_experiment(eid,request)
+   
+        # If it's a survey, format the results before sending
+        if experiment.template == "survey":
+            data = request.POST
+            data = complete_survey_result(experiment,data)
+        
+        # Mark the experiment as completed    
         if experiment not in worker.experiments_completed.all():
+
+            # Only send data if the user hasn't completed it yet
+            send_result.apply_async([experiment.id,worker.id,data])
             worker.experiments_completed.add(experiment)
             worker.save()
 
+    # Deploy the next experiment
     missing_batteries, blocking_batteries = check_battery_dependencies(battery, worker)
     if missing_batteries or blocking_batteries:
         return render_to_response(
@@ -507,6 +520,11 @@ def battery_router(request,bid,eid=None):
             context={'missing_batteries': missing_batteries,
                      'blocking_batteries': blocking_batteries}
         )
+
+    # Is the battery still active?
+    if battery.active == False:
+        context = {"contact_email":battery.email}
+        return render(request, "messages/battery_inactive.html", context)
 
     # Does the worker have experiments remaining?
     uncompleted_experiments = get_worker_experiments(worker,battery)
@@ -557,11 +575,9 @@ def edit_battery(request, bid=None):
                     message = "Battery updated successfully."
                 else:
                     # If it's a new battery, we need to submit a form to formspree
-                    message = """Battery created successfully! Check your email database to validate the email 
-                                 for use as a database. You will receive a message from formspree."""
-
-                # TODO: need to submit to this URL in view (automatically) when return to page
-                #    https://formspree.io/your@email.com
+                    message = """Battery created successfully! After installing experiments, we reccommend 
+                                 that you test your battery before making it live. An unsuccessful attempt 
+                                 to send data to your email using the SendGrid API will deactive your battery."""
 
                 battery = form.save(commit=False)
                 battery.save()

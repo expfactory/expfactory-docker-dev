@@ -29,6 +29,7 @@ MANAGERS = ADMINS
 
 # Reply to address for data sent to email
 REPLY_TO = "poldrackExperiments@gmail.com"
+REPLY_TO_NAME = "The Experiment Factory"
 
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
@@ -76,7 +77,7 @@ INSTALLED_APPS = (
     'django_gravatar',
     'rest_framework',
     'rest_framework.authtoken',
-    'opbeat.contrib.django',
+     #'opbeat.contrib.django',
 )
 
 

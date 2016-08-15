@@ -24,6 +24,10 @@ class Worker(models.Model):
     def __str__(self):
         return "%s" %(self.id)
 
+    def flat(self):
+        '''flat returns a flat representation of a worker (eg, key:value) in text'''
+        return "[WORKER]\nid:%s\n" %(self.id)
+
     def __unicode__(self):
         return "%s" %(self.id)
 

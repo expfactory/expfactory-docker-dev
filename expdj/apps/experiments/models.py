@@ -29,7 +29,8 @@ class Battery(models.Model):
     # Name must be unique because anonymous link is generated from hash
     name = models.CharField(max_length=200, unique=True, null=False, verbose_name="Name of battery")
     email = models.EmailField(verbose_name="Email database",blank=False,null=False,
-                              help_text="All data is sent to a Gmail account, for use as a database. The current limit is 1000/user/month.")
+                              help_text="All data is sent to a Gmail account, for use as a database.")
+    sendgrid = models.CharField(max_length=250,null=False,blank=False,help_text='We send emails to you via the SendGrid API. Make an account at <a href="https://app.sendgrid.com/signup" target="_blank">SendGrid</a>',verbose_name="SendGrid API Key")
     description = models.TextField(blank=True, null=True)
     consent = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your consent formatting.")
     advertisement = models.TextField(blank=True, null=True,help_text="Use HTML syntax to give your advertisement formatting.")
@@ -89,6 +90,10 @@ class Battery(models.Model):
     def __unicode__(self):
         return self.name
 
+    def flat(self):
+        '''flat returns a simple, flat representation of a battery name and unique id'''
+        return "[BATTERY]\nname: %s\nid: %s" %(self.name,self.id)
+
     def save(self, *args, **kwargs):
         super(Battery, self).save(*args, **kwargs)
         assign_perm('del_battery', self.owner, self)
@@ -135,6 +140,10 @@ class Experiment(models.Model):
     def get_absolute_url(self):
         return_cid = self.id
         return reverse('experiment_details', args=[str(return_cid)])
+
+    def flat(self):
+        '''flat returns a simple, flat representation of an experiment name and unique id'''
+        return "[EXPERIMENT]\nname: %s\nexp_id: %s\nid: %s\nversion: %s" %(self.name,self.exp_id,self.id,self.version)
 
 
 def contributors_changed(sender, instance, action, **kwargs):

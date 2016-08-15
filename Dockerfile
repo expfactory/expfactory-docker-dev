@@ -54,6 +54,7 @@ RUN pip install cognitiveatlas
 RUN pip install django-datatables-view
 RUN pip install 'django-oauth-toolkit==0.9.0'
 RUN pip install django-gravatar2
+RUN pip install sendgrid
 
 RUN mkdir /code
 WORKDIR /code

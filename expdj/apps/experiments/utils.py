@@ -124,7 +124,6 @@ def install_experiments(battery,repo_url,experiment_ids):
             # Finally, install the experiment to its folder in the user's battery directory
             output_folder = "%s/%s" %(install_dir,experiment["exp_id"])
             success = install_experiment_static(experiment=new_experiment,
-                                                battery=battery,
                                                 to_dir=output_folder,
                                                 from_dir=experiment_folder,
                                                 version="%s\n%s" %(repo_url,commit))
@@ -142,12 +141,11 @@ def install_experiments(battery,repo_url,experiment_ids):
     return message
 
 
-def install_experiment_static(experiment,battery,to_dir,from_dir,update=True,version=None):
+def install_experiment_static(experiment,to_dir,from_dir,update=True,version=None):
     '''install_experiment_static will install an experiment object static files to
     the battery static folder. In the case of a special expfactory template (survey, experiment,
     or game) the template is rendered and then saved. If successful, returns True, otherwise False.
     :param experiment: the expdj.apps.experiments.models.Experiment
-    :param battery: the battery object, for use to get the battery name and route URL
     :param to_dir: the directory to install to, typically in a battery folder
     :param from_dir: the temporary directory
     :param remove_tmp: remove the temporary experiment folder when finished
@@ -160,23 +158,19 @@ def install_experiment_static(experiment,battery,to_dir,from_dir,update=True,ver
         else:
             # Experiment static install fail, found files and update is not True
             return False    
+
     # Copy all experiment files into the folder
     copy_directory(from_dir,to_dir)
     # If the experiment template is special, we need to render the files
     if experiment.template == "survey":
         template = get_template("surveys/serve_battery.html")
         survey = load_experiment(to_dir)
-        # Form action is to submit data to email database via formspree
-        form_action = ("https://formspree.io/%s" %(battery.email)).encode('utf-8')
-        runcode,validation = generate_survey(survey,to_dir,form_action=form_action,csrf_token=True)
 
-        # We want to include hidden fields with experiment factory reply-to address, redirect, and subject
-        router_url = "%s%s" %(DOMAIN_NAME,battery.get_router_url(experiment.id))
-        hidden_fields = '<input type="text" name="_replyto" placeholder="%s"/>' %(REPLY_TO)
-        hidden_fields = '%s<input type="hidden" name="_next" value="%s"/>' %(hidden_fields,router_url)
-        hidden_fields = '<input type="hidden" name="_subject" value="[EXPFACTORY][RESULT][%s][%s][%s]"/>' %(hidden_fields,battery.name,experiment.name)
+        # We will submit the experiment to the router url
+        battery = experiment.battery
+        router_url = ("%s%s" %(DOMAIN_NAME,battery.get_router_url(experiment.id))).encode('utf-8')
+        runcode,validation = generate_survey(survey,to_dir,form_action=router_url,csrf_token=False)
         
-        runcode = runcode.replace("{% csrf_token %}",hidden_fields.encode('utf-8'))
         # static path should be replaced with web path
         url_path = "%s/" %(to_dir.replace(MEDIA_ROOT,MEDIA_URL[:-1])) 
         # prepare static files paths
@@ -188,6 +182,7 @@ def install_experiment_static(experiment,battery,to_dir,from_dir,update=True,ver
         index_html = template.render(context)
         index_file = "%s/index.html" %(to_dir)
         index_file = write_template(index_html,index_file)
+
     # If provided, write the version variable to the folder
     if version != None:
         write_template(version,"%s/VERSION" %(to_dir))
