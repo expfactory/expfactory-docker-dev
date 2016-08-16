@@ -36,28 +36,28 @@ Overall, the Experiment Factory is intended to be a place to develop, share, and
 
 You will be able to create sequences of experiments, each called a battery, either using one of our [survey or experiment templates](https://expfactory.github.io/table.html) or uploading your own experiment. For a quick getting started, once you register and login to the interface, you can create a battery:
 
-![newbattery.png](newbattery.png)
+![newbattery.png](img/newbattery.png)
 
 The only essential fields are to specify your [SendGrid](https://app.sendgrid.com/signup) API key, and the email to which the results will be sent. The remaining fields (time limits, instructions, advertisement, etc.) are optional.
 
 Once you have created a battery, you should add experiments to it! You can "Upload from Github" or "Create" new using our interface:
 
-![createdbattery.png](createdbattery.png)
+![createdbattery.png](img/createdbattery.png)
 
 
 #### Install from Github
 We've done quite a bit of work to make a bunch of great [experiments and surveys](http://expfactory.github.io) that you can deploy with a few clicks. When you select to upload from Github you will see an option to select one of our repos, or copy paste a link to your own repo:
 
-![newexperiment.png](newexperiment.png)
-![newexperiment1.png](newexperiment1.png)
+![newexperiment.png](img/newexperiment.png)
+![newexperiment1.png](img/newexperiment1.png)
 
 We are currently offering surveys and experiments by way of the [JsPsych framework](https://github.com/jodeleeuw/jsPsych), a great framework by Josh DeLeeuw.
 
-![newexperiment2.png](newexperiment2.png)
+![newexperiment2.png](img/newexperiment2.png)
 
 When you click `search`, all valid experiments in your chosen repo will be available for install. If you don't see an experiment it means that it didn't pass validation, and you should use our [command line tools and robot](http://expfactory.readthedocs.io/en/latest/development.html#testing) to test your experiment folders.
 
-![newexperiment3.png](newexperiment3.png)
+![newexperiment3.png](img/newexperiment3.png)
 
 
 ###### What is a valid experiment?
