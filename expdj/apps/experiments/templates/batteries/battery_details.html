@@ -25,7 +25,7 @@
                            <li role="separator" class="divider"></li>
                            <li class="dropdown-header">Local Computer</li>
                            <li role="separator" class="divider"></li>
-                            <li><a href="#" id="anon_link" class='btn-default btn-lg'>Get Link</a></li>
+                            <li><a href="#" id="anon_link" class='btn-default btn-lg'>Get Battery Link</a></li>
                             <li><a href="#" id="gmail_link" class='btn-default btn-lg'>Gmail Authentication Link</a></li>
                         </ul>
                     </span>
@@ -129,11 +129,11 @@
           </tbody>
           </table>
           {% if edit_permission %}
-          <a style="position:absolute;left:20px;margin-top:50px" class='button btn-primary' href='{% url 'add_experiment' battery.id %}'>Add Experiments</a>
+          <a style="position:absolute;left:20px;margin-top:50px" class='button btn-primary' href='{% url 'upload_experiment' battery.id %}'>Upload Experiments</a>
           {% endif %}
          {% else %}
              {% if edit_permission %}
-             <a class='button btn-primary' href='{% url 'add_experiment' battery.id %}'>Add Experiments to Battery</a>
+             <a class='button btn-primary' href='{% url 'upload_experiment' battery.id %}'>Upload Experiments to Battery</a>
              {% endif %}
          {% endif %}
         </div>

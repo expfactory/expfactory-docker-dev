@@ -189,13 +189,13 @@ def save_experiment(request,bid):
 
 
 @login_required
-def add_experiment(request,bid):
-    '''add_experiment
+def upload_experiment(request,bid):
+    '''upload_experiment
     By default, show experiments available in expfactory-experiments, expfactory-surverys, and expfactory-games
     '''
     battery = get_battery(bid,request)
     context = {"bid":battery.id}
-    return render(request, "experiments/add_experiment.html", context)
+    return render(request, "experiments/upload_experiment.html", context)
     
 
 @login_required
