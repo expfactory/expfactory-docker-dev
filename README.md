@@ -49,11 +49,9 @@ Once you have created a battery, you should add experiments to it! You can "Uplo
 We've done quite a bit of work to make a bunch of great [experiments and surveys](http://expfactory.github.io) that you can deploy with a few clicks. When you select to upload from Github you will see an option to select one of our repos, or copy paste a link to your own repo:
 
 ![newexperiment.png](img/newexperiment.png)
-![newexperiment1.png](img/newexperiment1.png)
+![newexperiment2.png](img/newexperiment2.png)
 
 We are currently offering surveys and experiments by way of the [JsPsych framework](https://github.com/jodeleeuw/jsPsych), a great framework by Josh DeLeeuw.
-
-![newexperiment2.png](img/newexperiment2.png)
 
 When you click `search`, all valid experiments in your chosen repo will be available for install. If you don't see an experiment it means that it didn't pass validation, and you should use our [command line tools and robot](http://expfactory.readthedocs.io/en/latest/development.html#testing) to test your experiment folders.
 
