@@ -166,10 +166,12 @@ def edit_experiment(request,bid,eid):
                "battery":battery}
     return render(request, "experiments/edit_experiment.html", context)
 
+
 @login_required
 def save_experiment(request,bid):
     '''save_experiment
-    save experiment and custom details for battery
+    save experiment and custom details for battery. This is linked to the upload experiment view,
+    as experiments come by way of upload (from Github url)
     '''
     battery = get_battery(bid,request)
 

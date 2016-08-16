@@ -16,6 +16,7 @@
                 {% endif %}
 
                     {% if experiments %}
+                    <!-- Serve Battery Options -->
                     <span class="dropdown">
                         <button class="btn-default btn-lg dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                             Serve Battery
@@ -30,6 +31,21 @@
                         </ul>
                     </span>
                     {% endif %}
+ 
+                    <!-- Add Experiments Options -->
+                    <span class="dropdown">
+                        <button class="btn-default btn-lg dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Add Experiments
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                           <li role="separator" class="divider"></li>
+                           <li role="separator" class="divider"></li>
+                             <li><a href="#" class='btn-default btn-lg'>New Survey</a></li>
+                             <li><a class='btn-default btn-lg' href='{% url 'upload_experiment' battery.id %}'>Upload <i class="fa fa-github"></i></a></li>
+                        </ul>
+                    </span>
+
             {% else %}
                 {% if experiments %}
                 <div class="alert alert-info" role="alert">You do not have permission to edit this battery, but you can

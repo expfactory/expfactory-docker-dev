@@ -8,6 +8,97 @@
 
    >> He started using Docker.
 
+# For Users
+
+## About Expfactory
+
+This is the Experiment Factory application, verison 2.0, developed by @vsoch, which has several important updates:
+
+#### Experiments are unique to a battery. 
+This means that when you install an experiment, it is owned by you, sitting in a folder that you control. The old version 1.0 expected users to share templates. While this might have made sense for reproducibility, it didn't empower the user to install his or her own experiments, or have any control over them. That's changed.
+
+#### Use our templates, or not. 
+We have spent quite a bit of time developing [surveys and experiments](http://expfactory.github.io/table.html) that render from a simple tab delimited file or single javascript file ([example survey](https://github.com/expfactory/surveys/blob/master/bis11_survey/survey.tsv),[example experiment](https://github.com/expfactory/experiments/blob/master/adaptive_n_back/experiment.js)), however what if you have your own static experiment that you want to run? The Experiment Factory now supports custom experiments. You simply change the "template" variable to `custom`, create a config.json to put in the experiment folder, and you can upload it to our interface.
+
+#### We don't store your data
+The data gets submit from our interface and is sent directly to you. For an open source project, there is much liability in having the responsibility to maintain your data. This was preventing us from opening up the application to the larger public, and the lead developer had great issue with this, as it wasn't her vision to have the application be exclusive. Instead, we have you create a [SendGrid](https://app.sendgrid.com/signup) API key, and an email account that will be used exclusively for your results. SendGrid gives you 12,000 email sends per month, and that will work quite well for most single studies. On the email side, a standard Gmail account would let you store upwards of 17K results, given that a result is 1MB in size. And we know this might get annoying to deal with, so we are developing tools that will allow you to automatically parse the results from your email, and send them to your "real" database of choice. 
+
+#### Better Data Protection
+For version 1.0, the URL to paricipate in an experiment was shared on MTurk, and a user could put in a faux ID and potentially spam the server. In version 2.0, your battery is associated with a unique URL that must be given out by the researcher to participants. Once the participant has accepted to participate, a unique session is stored that will carry the participant through the battery, even if he/she closes the browser. If there is funny business, such as a battery result not sending, we have checks that will deactivate your battery to prevent data loss. 
+
+#### Mechnical Turk is removed
+...for now. Storing AWS credientials was another huge liability, and while functionality like this would be desired for the future, it should not be an embedded part of the application. In version 1.0, MTurk was an integrted part of the application, and in version 2.0 it (will be) more of a plugin.
+
+Overall, the Experiment Factory is intended to be a place to develop, share, and deploy web-based experiments. It is not intended to be a data warehouse, or optimized for anything but that function, and this was the original vision of the main developer. Please submit feedback and feature requests as an [issue](http://www.github.com/expfactory/expfactory/issues). I am hopeful that with a simplified, more robust application, the Experiment Factory can be used as it was originally intended, to empower all researchers to easily conduct web-based experiments.
+
+
+## Using the Experiment Factory
+
+You will be able to create sequences of experiments, each called a battery, either using one of our [survey or experiment templates](https://expfactory.github.io/table.html) or uploading your own experiment. For a quick getting started, once you register and login to the interface, you can create a battery:
+
+![newbattery.png](newbattery.png)
+
+The only essential fields are to specify your [SendGrid](https://app.sendgrid.com/signup) API key, and the email to which the results will be sent. The remaining fields (time limits, instructions, advertisement, etc.) are optional.
+
+Once you have created a battery, you should add experiments to it! You can "Upload from Github" or "Create" new using our interface:
+
+![createdbattery.png](createdbattery.png)
+
+
+#### Install from Github
+We've done quite a bit of work to make a bunch of great [experiments and surveys](http://expfactory.github.io) that you can deploy with a few clicks. When you select to upload from Github you will see an option to select one of our repos, or copy paste a link to your own repo:
+
+![newexperiment.png](newexperiment.png)
+![newexperiment1.png](newexperiment1.png)
+
+We are currently offering surveys and experiments by way of the [JsPsych framework](https://github.com/jodeleeuw/jsPsych), a great framework by Josh DeLeeuw.
+
+![newexperiment2.png](newexperiment2.png)
+
+When you click `search`, all valid experiments in your chosen repo will be available for install. If you don't see an experiment it means that it didn't pass validation, and you should use our [command line tools and robot](http://expfactory.readthedocs.io/en/latest/development.html#testing) to test your experiment folders.
+
+![newexperiment3.png](newexperiment3.png)
+
+
+###### What is a valid experiment?
+All valid experiments must have a [config.json](http://expfactory.readthedocs.io/en/latest/development.html?highlight=config#config-json) file, where you specify scripts needed at runtime, a unique id called an `exp_id`, and other variables that are needed by our application. We've created special "template" experiments for [material-design-light surveys](http://expfactory.readthedocs.io/en/latest/getmdl.io) and jspsych experiments that you would specify in the `template` variable, but you don't have to use them. All valid experiments, whether you use a template or your own custom, must have the following:
+
+- a config.json file
+- all file paths served relative to the experiment folder
+- all scripts provided by CDN (suggested), or in the experiment folder
+
+Surveys must have a `survey.tsv` file with questions ([example survey](https://github.com/expfactory/surveys/blob/master/bis11_survey/survey.tsv)) and jspsych experiments must have an [experiment.js](http://expfactory.readthedocs.io/en/latest/development.html#experiment-js) file that meets certian criteria.
+
+
+###### What is a custom experiment?
+A custom experiment has a template variable `custom` in the config.json, and along with the above list, it MUST have a "template.html" file in the folder that contains the following substitution tags:
+
+ - {{form_submit}} should be in some form action, and this will be substituted with a server URL by our application
+ - {{css}}: optional. Any .css files in the "run" variable of the config.json will be rendered at this tag, with the appropriate server path substitued.
+ - {{js}}: same as above, but for javascript.
+
+For CDN served files, you can specify them in the `run` variable in the config.json, or directly in the template.html. That's it!
+
+
+## Future and In Progress
+
+@vsoch (I) am starting a new job, and so development is done in my free time, but I have many plans for improved functionality, including:
+
+#### Integration with Open Science Framework
+Your experiments will have a unique id and version that will link with the open science framework, so experiments can be registered along with the rest of your study protocol.
+
+#### Online Experiment Generation
+Online generation of surveys is almost complete, and the same would be desired for experiments. The Jspsych experiments aren't yet optimized to be easy (you need to know how to code in JavaScript), and I don't find this acceptable. While it's important for researchers to know how to code, generation of experiments should be easy.
+
+#### Better Experiment Customization
+Right now, our templates take in a limited set of variables defined in the config.json to customize the experiments. This will either be expanded and made easier, or this functionality will be integrated directly into the interface.
+
+
+See our [issues board](http://www.github.com/expfactory/expfactory/issues) for more plans, and please submit one (or many!) of your own with feedback if you have ideas. 
+
+
+# For Developers
+
 ## Setup for Local Development
 Thanks to @NeuroVault for these steps.
 
