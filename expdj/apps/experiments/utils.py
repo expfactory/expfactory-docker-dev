@@ -82,6 +82,7 @@ def install_experiments(battery,repo_url,experiment_ids):
     # Get the experiment selection, and install the experiment for the user
     tmpdir = tempfile.mkdtemp()
     experiment_selection = get_experiment_selection(repo_url,tmpdir=tmpdir,remove_tmp=False)
+    message = None
 
     # The git commit is saved with the experiment as the "version"
     repo_folder = "%s/0" %(tmpdir)

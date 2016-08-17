@@ -100,26 +100,6 @@ def get_experiment(eid,request):
     else:
         return experiment
 
-
-# Update an experiment from github url
-@login_required
-def update_experiment_template(request,eid):
-    '''This will update static files, along with the config.json parameters'''
-    context = {"experiments": ExperimentTemplate.objects.all()}
-    if request.user.is_superuser:
-        experiment = get_experiment_template(eid=eid,request=request)
-        experiment_type = get_experiment_type(experiment)
-        errored_experiments = install_experiments(experiment_tags=[experiment.exp_id],repo_type=experiment_type)
-        if len(errored_experiments) > 0:
-            message = "The experiments %s did not update successfully." %(",".join(errored_experiments))
-        else:
-            message = "Experiments updated successfully."
-            experiments = ExperimentTemplate.objects.all()
-            context = {"experiments":experiments,
-                       "message":message}
-    return render(request, "experiments/all_experiments.html", context)
-
-
 # All experiments for the user
 def experiments_view(request):
     experiments = Experiment.objects.filter(battery__private=False)
@@ -184,8 +164,8 @@ def save_experiment(request,bid):
         experiment_ids = [x.replace("EXPERIMENT_","") for x in contenders if expression.search(x)]
         
         if repo_url != None and len(experiment_ids)>0:
-            message = install_experiments(battery,repo_url,experiment_ids)     
-        return view_battery(request, bid,message=message)
+            message = install_experiments(battery,repo_url,experiment_ids)    
+        return view_battery(request,bid,message=message)
 
     return HttpResponseRedirect(battery.get_absolute_url())
 
