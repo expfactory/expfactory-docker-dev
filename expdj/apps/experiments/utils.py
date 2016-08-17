@@ -213,7 +213,7 @@ def install_experiment_custom(experiment,battery,router_url,to_dir):
     # Otherwise, read in the template file, make appropriate substitutions
     index_html = read_template(template_file)
     index_html.replace("{{form_submit}}",router_url)
-                        
+
     # static path should be replaced with web path
     url_path = "%s/" %(to_dir.replace(MEDIA_ROOT,MEDIA_URL[:-1])) 
     # prepare static files paths
@@ -240,25 +240,26 @@ def install_experiment_template(experiment,battery,router_url,to_dir):
     if experiment.template == "jspsych":
         template = get_template("experiments/serve_battery.html")
         config = load_experiment(to_dir)[0]
-        runcode = get_jspsych_init(config,submit_url=router_url)
+        runcode = get_jspsych_init(config)
                 
     if experiment.template == "survey":
         template = get_template("surveys/serve_battery.html")
         config = load_experiment(to_dir)
         runcode,validation = generate_survey(config,to_dir,form_action=router_url,csrf_token=False)
         context["validation"] = validation
-        
+
     # static path should be replaced with web path
     url_path = "%s/" %(to_dir.replace(MEDIA_ROOT,MEDIA_URL[:-1])) 
+
     # prepare static files paths
     css,js = prepare_header_scripts(config,url_prefix=url_path)
-    
+
     # Update the context dictionary, render the template
     context["run"] = runcode
     context["css"] = css
     context["js"] = js
-    context = Context(context)
-    
+    context["form_submit"] = router_url
+    context = Context(context)  
     # All templates will have the index written
     return template.render(context)
 
@@ -417,7 +418,7 @@ def sniff_script_extension(s):
     return "css"
 
 
-def get_jspsych_init(experiment,submit_url,finished_message=None):
+def get_jspsych_init(experiment,finished_message=None,submit_form="#questions"):
     '''get_jspsych_init
     return entire jspsych init structure
     :param experiment: the loaded config.json for the experiment
@@ -427,7 +428,22 @@ def get_jspsych_init(experiment,submit_url,finished_message=None):
     jspsych_init = "jsPsych.init({\ntimeline: %s_experiment,\n" %(experiment["exp_id"])
     if finished_message == None:
         finished_message = 'You have completed the experiment. Click "Next Experiment" to keep your result, and progress to the next task. If you believe your ability to focus was significantly compromised by some external factor (e.g. someone started talking to you while you were doing the task) press "Redo Experiment" to start the task again.'
-    default_inits = {"on_finish":["""finished_message = '<div id="finished_message" style="margin:100px"><h1>Experiment Complete</h1><p>%s</p><button id="next_experiment_button" type="button" class="btn btn-success">Next Experiment</button><button type="button" id="redo_experiment_button" class="btn btn-danger">Redo Experiment</button></div>'\nexpfactory.recordTrialData(jsPsych.data.getData());\n$("body").append(finished_message)\n$(".display_stage").hide()\n$(".display_stage_background").hide()\n$("#redo_experiment_button").click( function(){\njavascript:window.location.reload();\n})\n$("#next_experiment_button").click( function(){\n$.ajax({ type: "POST",\ncontentType: "application/json",\nurl : "%s",\ndata : JSON.stringify(jsPsych.data.getData()),\ndataType: "json",\nerror: function(error){\nconsole.log(error)\n},\nsuccess: function(data){\nconsole.log("Finished!");\ndocument.location = "%s";\n}\n});\n});\n""" %(finished_message,submit_url,submit_url)]}
+    default_inits = {"on_finish":      ["""finished_message = '<div id="finished_message" style="margin:100px"><h1>Experiment Complete</h1><p>%s</p><button id="next_experiment_button" type="button" class="btn btn-success">Next Experiment</button><button type="button" id="redo_experiment_button" class="btn btn-danger">Redo Experiment</button></div>'
+                                       $("body").append(finished_message)
+                                       $(".display_stage").hide()
+                                       $(".display_stage_background").hide()
+                                       $("#redo_experiment_button").click( function(){
+                                           javascript:window.location.reload();
+                                       })
+                                       $("#next_experiment_button").click( function(){
+                                           $("%s").submit();                                         
+                                       });""" %(finished_message,submit_form)],
+                     # Add the experiment data to the form, as a hidden field, with the element trial index as the name
+                     "on_data_update": ["""var element = jsPsych.data.getData().slice(-1)[0];
+                                       var $hidden = $('<input type="hidden" name="' + element.trial_index + '"/>');
+                                       $hidden.val(JSON.stringify(element));
+                                       $("%s").append($hidden);
+                                    """ %(submit_form)]}
     if "deployment_variables" in experiment:
         if "jspsych_init" in experiment["deployment_variables"]:
             custom_variables = experiment["deployment_variables"]["jspsych_init"]
