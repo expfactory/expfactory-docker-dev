@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     libhdf5-dev \
     libgeos-dev \
     openssl \
-    wget
+    wget \ 
+    vim
 
 RUN pip install --upgrade pip
 RUN pip install numpy

@@ -5,9 +5,11 @@
     <meta charset="utf-8" />
     <script src="{% static "js/jquery.min.js"%}"></script>
     <script src="{% static "js/bootstrap.min.js"%}"></script>
-    <script type="text/javascript" src="/static/expdjjs/underscore-min.js"></script>
-    <script type="text/javascript" src="/static/expdjjs/backbone-min.js"></script>
-    <script type="text/javascript" src="/static/expdjjs/expfactory.js"></script>
+    <script type="text/javascript" src="/assets/js/underscore-min.js"></script>
+    <script type="text/javascript" src="/assets/js/backbone-min.js"></script>
+    <script type="text/javascript" src="/assets/js/expfactory.js"></script>
+    {{ js | safe }}
+    {{ css | safe }}
     {{ experiment_load | safe }}
 
     <!-- Google Analytics -->
@@ -20,9 +22,6 @@
 <script>
 $(document).ready(function(){
     
-    /*Just to store task data as we go*/
-    var expfactory = new ExpFactory(uniqueId);
-
     // Start experiment when participant pushes button
     $("#start_experiment_button").click(function(){
         $("#instructions_modal").hide();
@@ -33,8 +32,6 @@ $(document).ready(function(){
     $("#disagree_button").click(function(){
         document.location = "{% url 'finished_view' %}"
     })
-
-    });
 
     $("#start_experiment_button").click();
 });

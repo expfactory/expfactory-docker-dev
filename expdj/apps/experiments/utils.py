@@ -240,19 +240,18 @@ def install_experiment_template(experiment,battery,router_url,to_dir):
     if experiment.template == "jspsych":
         template = get_template("experiments/serve_battery.html")
         config = load_experiment(to_dir)[0]
-        runcode = get_jspsych_init(config,finished_message=None)
+        runcode = get_jspsych_init(config,submit_url=router_url)
                 
-
     if experiment.template == "survey":
         template = get_template("surveys/serve_battery.html")
-        survey = load_experiment(to_dir)
-        runcode,validation = generate_survey(survey,to_dir,form_action=router_url,csrf_token=False)
-        context["validation"] = validation,
+        config = load_experiment(to_dir)
+        runcode,validation = generate_survey(config,to_dir,form_action=router_url,csrf_token=False)
+        context["validation"] = validation
         
     # static path should be replaced with web path
     url_path = "%s/" %(to_dir.replace(MEDIA_ROOT,MEDIA_URL[:-1])) 
     # prepare static files paths
-    css,js = prepare_header_scripts(survey,url_prefix=url_path)
+    css,js = prepare_header_scripts(config,url_prefix=url_path)
     
     # Update the context dictionary, render the template
     context["run"] = runcode
@@ -381,19 +380,20 @@ def prepare_header_scripts(experiment,url_prefix="",join=True):
         script = s.split("?")[0]
         ext = sniff_script_extension(script)
 
-        # Do we have a relative experiment path?
-        if len(script.split("/")) == 1:
-            if ext == "js":
-                js = "%s\n<script src='%s%s'></script>" %(js,url_prefix,s)
-            elif ext == "css":
-                css = "%s\n<link rel='stylesheet' type='text/css' href='%s%s'>" %(css,url_prefix,s)
         # Do we have an https/https path?
-        elif re.search("^http",script):
+        if re.search("^http",script):
             if ext == "js":
                 js = "%s\n<script src='%s'></script>" %(js,s)
             elif ext == "css":
                 css = "%s\n<link rel='stylesheet' type='text/css' href='%s'>" %(css,s)
- 
+
+        # Do we have a relative experiment path?
+        else:
+            if ext == "js":
+                js = "%s\n<script src='%s%s'></script>" %(js,url_prefix,s)
+            elif ext == "css":
+                css = "%s\n<link rel='stylesheet' type='text/css' href='%s%s'>" %(css,url_prefix,s)
+
     if join == True:
         return "".join(css),"".join(js)
     return css,js
@@ -417,16 +417,17 @@ def sniff_script_extension(s):
     return "css"
 
 
-def get_jspsych_init(experiment,finished_message=None):
+def get_jspsych_init(experiment,submit_url,finished_message=None):
     '''get_jspsych_init
     return entire jspsych init structure
     :param experiment: the loaded config.json for the experiment
+    :param router_url: the url for the participant to go to, to restart or go to a new experiment.
     :param finished_message: custom message to show at the end of the experiment with Redo and Next Experiment Buttons
     '''
     jspsych_init = "jsPsych.init({\ntimeline: %s_experiment,\n" %(experiment["exp_id"])
     if finished_message == None:
         finished_message = 'You have completed the experiment. Click "Next Experiment" to keep your result, and progress to the next task. If you believe your ability to focus was significantly compromised by some external factor (e.g. someone started talking to you while you were doing the task) press "Redo Experiment" to start the task again.'
-    default_inits = {"on_finish":["""finished_message = '<div id="finished_message" style="margin:100px"><h1>Experiment Complete</h1><p>%s</p><button id="next_experiment_button" type="button" class="btn btn-success">Next Experiment</button><button type="button" id="redo_experiment_button" class="btn btn-danger">Redo Experiment</button></div>'\nexpfactory.recordTrialData(jsPsych.data.getData());\n$("body").append(finished_message)\n$(".display_stage").hide()\n$(".display_stage_background").hide()\n$("#redo_experiment_button").click( function(){\njavascript:window.location.reload();\n})\n$("#next_experiment_button").click( function(){\nexpfactory.djstatus = "FINISHED";\n$.ajax({ type: "POST",\ncontentType: "application/json",\nurl : "/local/{{result.id}}/",\ndata : JSON.stringify(expfactory),\ndataType: "json",\nerror: function(error){\nconsole.log(error)\n},\nsuccess: function(data){\nconsole.log("Finished!");\ndocument.location = "{{next_page}}";\n}\n});\n});\n""" %finished_message]}
+    default_inits = {"on_finish":["""finished_message = '<div id="finished_message" style="margin:100px"><h1>Experiment Complete</h1><p>%s</p><button id="next_experiment_button" type="button" class="btn btn-success">Next Experiment</button><button type="button" id="redo_experiment_button" class="btn btn-danger">Redo Experiment</button></div>'\nexpfactory.recordTrialData(jsPsych.data.getData());\n$("body").append(finished_message)\n$(".display_stage").hide()\n$(".display_stage_background").hide()\n$("#redo_experiment_button").click( function(){\njavascript:window.location.reload();\n})\n$("#next_experiment_button").click( function(){\n$.ajax({ type: "POST",\ncontentType: "application/json",\nurl : "%s",\ndata : JSON.stringify(jsPsych.data.getData()),\ndataType: "json",\nerror: function(error){\nconsole.log(error)\n},\nsuccess: function(data){\nconsole.log("Finished!");\ndocument.location = "%s";\n}\n});\n});\n""" %(finished_message,submit_url,submit_url)]}
     if "deployment_variables" in experiment:
         if "jspsych_init" in experiment["deployment_variables"]:
             custom_variables = experiment["deployment_variables"]["jspsych_init"]
