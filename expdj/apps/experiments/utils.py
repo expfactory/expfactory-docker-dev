@@ -82,7 +82,6 @@ def install_experiments(battery,repo_url,experiment_ids):
     # Get the experiment selection, and install the experiment for the user
     tmpdir = tempfile.mkdtemp()
     experiment_selection = get_experiment_selection(repo_url,tmpdir=tmpdir,remove_tmp=False)
-    message = None
 
     # The git commit is saved with the experiment as the "version"
     repo_folder = "%s/0" %(tmpdir)
@@ -129,17 +128,17 @@ def install_experiments(battery,repo_url,experiment_ids):
                                                 from_dir=experiment_folder,
                                                 version="%s\n%s" %(repo_url,commit))
             if success != True:
-                errored_experiments.append(experiment['exp_id'])
                 # If success returns as not true, is a mesage to indicate error
-                message = success
+                error_message = "%s: %s" (experiment['exp_id'],success)
+                errored_experiments.append(error_message)
       
         except:
             errored_experiments.append(experiment['exp_id'])
 
     # Remove the temporary directory, return message
     shutil.rmtree(tmpdir)
-    if len(errored_experiments) > 0 and message == None:
-        message = "Experiments %s had error installing." %(",".join(errored_experiments))
+    if len(errored_experiments) > 0:
+        message = "Experiments had errors installing: %s" %(",".join(errored_experiments))
     return message
 
 
