@@ -9,6 +9,12 @@ from glob import glob
 import os
 from expdj.settings import BASE_DIR
 
+# Material Design Lite color choices
+COLOR_CHOICES = ('amber','blue','blue-grey','brown','cyan','deep-orange',
+                 'deep-purple','green','grey','indigo','light-blue',
+                 'light-green','lime','orange','pink','purple','red',
+                 'teal','yellow')
+
 
 class SurveyForm(forms.Form):
     '''make a new (static) survey, with fields corresponding to the data in the config.json.
@@ -16,23 +22,31 @@ class SurveyForm(forms.Form):
     '''
     # make the exp_id from this, give error to user if already exists
     name = forms.CharField(label='exp_id', max_length=250)
-    base_color = forms.CharField(label='base_color',max_length=100)
-    accent_color = forms.CharField(label='accent_color',max_length=100)
-
+    base_color = forms.ChoiceField(
+        label='base_color',
+        required=True,
+        widget=forms.RadioSelect,
+        choices=COLOR_CHOICES,
+    )
+    accent_color = forms.ChoiceField(
+        label='accent_color',
+        required=True,
+        widget=forms.RadioSelect,
+        choices=COLOR_CHOICES,
+    )
+    # see colors at https://getmdl.io/customize/
     notes = forms.CharField(widget=forms.Textarea)
 
     # This will need to be external required files, along with defaults
     run = forms.FileField()
     cognitive_atlas_task_id forms.CharField(required=False)
-    contributors = 
-    time =
+    contributors = forms.CharField(widget=forms.Textarea)
+    time = forms.NumberInput(required=False)
     reference = forms.URLField(required=False)
     publish = forms.BooleanField(default=True)
-    # publish is automatically pushed
 
     def clean(self):
         cleaned_data = super(SurveyForm, self).clean()
-
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
