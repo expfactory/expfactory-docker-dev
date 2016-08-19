@@ -185,7 +185,7 @@ def new_survey(request,bid):
     '''new_survey generates a new experiment factory survey depending on the users specifications
     '''
     battery = get_battery(bid,request)
-    context = {"bid":battery.id}
+    context = {"battery":battery}
 
     if request.method == "POST":
         form = SurveyForm(request.POST)
@@ -197,7 +197,7 @@ def new_survey(request,bid):
         form = SurveyForm()
         context["form"] = form
 
-     return render(request, "surveys/new_survey.html", context)
+    return render(request, "surveys/new_survey.html", context)
 
 
 

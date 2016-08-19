@@ -39,11 +39,11 @@ class SurveyForm(forms.Form):
 
     # This will need to be external required files, along with defaults
     run = forms.FileField()
-    cognitive_atlas_task_id forms.CharField(required=False)
+    cognitive_atlas_task_id = forms.CharField(required=False)
     contributors = forms.CharField(widget=forms.Textarea)
-    time = forms.NumberInput(required=False)
+    time = forms.NumberInput()
     reference = forms.URLField(required=False)
-    publish = forms.BooleanField(default=True)
+    publish = forms.BooleanField()
 
     def clean(self):
         cleaned_data = super(SurveyForm, self).clean()

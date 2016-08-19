@@ -40,8 +40,7 @@
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                            <li role="separator" class="divider"></li>
-                           <li role="separator" class="divider"></li>
-                             <li><a href="#" class='btn-default btn-lg'>New Survey</a></li>
+                             <li><a href="{% url 'new_survey' battery.id %}" class='btn-default btn-lg'>New Survey</a></li>
                              <li><a class='btn-default btn-lg' href='{% url 'upload_experiment' battery.id %}'>Upload <i class="fa fa-github"></i></a></li>
                         </ul>
                     </span>
