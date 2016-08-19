@@ -1,0 +1,33 @@
+[
+    {
+        "name": "{{ survey_name }}",
+        "template":"survey",
+        "run": [
+                 "https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en",
+                 "https://fonts.googleapis.com/icon?family=Material+Icons",
+                 "https://code.getmdl.io/1.1.1/material.{{ main_color }}-{{ accent_color }}.min.css",
+                 "style.css",
+                 "smoothness/jquery-ui-1.10.4.custom.min.css",
+                 {{css}}
+                 "https://code.jquery.com/jquery-2.2.4.min.js",
+                 "https://code.getmdl.io/1.1.1/material.min.js",
+                 "jquery-ui-1.10.4.custom.min.js",
+                 "jquery.wizard.js",
+                 "https://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.50/jquery.form.min.js",
+                 "https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.12.0/jquery.validate.min.js"
+                 {{js}}
+               ],
+        "exp_id": "{{exp_id}}",
+        "cognitive_atlas_task_id": "{{ cognitive_atlas_task_id }}",
+        "contributors": [{{ creators }}], 
+        "time":{{ time }},
+        "experiment_variables": "",
+        "reference": "{{ reference }}",
+        "notes": "{{ notes }}",
+        "publish":"{{ publish }}",
+        "deployment_variables":{"material_design":
+                               {"fullscreen": true}
+                       }
+    
+   }
+]

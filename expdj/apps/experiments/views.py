@@ -33,7 +33,7 @@ from expdj.apps.experiments.utils import (
 )
 from expdj.apps.main.views import google_auth_view
 from expdj.apps.experiments.forms import (
-    ExperimentForm, BatteryForm
+    ExperimentForm, BatteryForm, SurveyForm
 )
 from expdj.apps.experiments.models import (
     Experiment, Battery
@@ -179,6 +179,27 @@ def upload_experiment(request,bid):
     context = {"bid":battery.id}
     return render(request, "experiments/upload_experiment.html", context)
     
+
+@login_required
+def new_survey(request,bid):
+    '''new_survey generates a new experiment factory survey depending on the users specifications
+    '''
+    battery = get_battery(bid,request)
+    context = {"bid":battery.id}
+
+    if request.method == "POST":
+        form = SurveyForm(request.POST)
+        if form.is_valid():
+            print("valid")    
+            # upload the new survey, creating a config.json
+            pickle.dump(form,open('form.pkl','wb'))
+    else:
+        form = SurveyForm()
+        context["form"] = form
+
+     return render(request, "surveys/new_survey.html", context)
+
+
 
 @login_required
 def change_experiment_order(request,bid,eid):

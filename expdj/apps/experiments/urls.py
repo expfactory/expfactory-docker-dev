@@ -6,9 +6,10 @@ from expdj import settings
 
 urlpatterns = patterns('',
 
-    # Experiments
+    # Experiments and Surveys
     url(r'^experiments$', expv.experiments_view, name="experiments"),
     url(r'^experiments/(?P<eid>.+?)/preview$',expv.preview_experiment,name='preview_experiment'),
+    url(r'^surveys/(?P<bid>\d+|[A-Z]{8})/survey/add$',expv.new_survey,name='new_survey'),
 
     # Experiments in Batteries
     url(r'^experiments/(?P<bid>\d+|[A-Z]{8})/add$',expv.upload_experiment,name='upload_experiment'),
