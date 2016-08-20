@@ -10,11 +10,25 @@ import os
 from expdj.settings import BASE_DIR
 
 # Material Design Lite color choices
-COLOR_CHOICES = ('amber','blue','blue-grey','brown','cyan','deep-orange',
-                 'deep-purple','green','grey','indigo','light-blue',
-                 'light-green','lime','orange','pink','purple','red',
-                 'teal','yellow')
-
+COLOR_CHOICES = (('amber', 'Amber',), 
+                 ('blue', 'Blue',),
+                 ('blue-grey','Blue Grey',),
+                 ('brown', 'Brown',),
+                 ('cyan', 'Cyan',),
+                 ('deep-orange', 'Deep Orange',),
+                 ('deep-purple', 'Deep Purple',),
+                 ('green', 'Green',),
+                 ('grey', 'Grey',),
+                 ('indigo', 'Indigo',),
+                 ('light-blue', 'Light Blue',),
+                 ('light-green', 'Light Green',),
+                 ('lime', 'Lime',),
+                 ('orange', 'Orange',),
+                 ('pink', 'Pink',),
+                 ('purple', 'Purple',),
+                 ('red', 'Red',),
+                 ('teal', 'Teal',),
+                 ('yellow', 'Yellow',))
 
 class SurveyForm(forms.Form):
     '''make a new (static) survey, with fields corresponding to the data in the config.json.
@@ -22,28 +36,32 @@ class SurveyForm(forms.Form):
     '''
     # make the exp_id from this, give error to user if already exists
     name = forms.CharField(label='exp_id', max_length=250)
-    base_color = forms.ChoiceField(
+    base_color = forms.CharField(
         label='base_color',
         required=True,
-        widget=forms.RadioSelect,
-        choices=COLOR_CHOICES,
+        widget=forms.Select(choices=COLOR_CHOICES),
+        help_text="The primary page color for selected buttons and headers."
     )
-    accent_color = forms.ChoiceField(
+    accent_color = forms.CharField(
         label='accent_color',
         required=True,
-        widget=forms.RadioSelect,
-        choices=COLOR_CHOICES,
+        widget=forms.Select(choices=COLOR_CHOICES),
+        help_text="The accent page color for buttons and other details."
     )
     # see colors at https://getmdl.io/customize/
-    notes = forms.CharField(widget=forms.Textarea)
+    notes = forms.CharField(widget=forms.Textarea,
+                            help_text="Any additional or important notes about the survey.")
 
     # This will need to be external required files, along with defaults
-    run = forms.FileField()
-    cognitive_atlas_task_id = forms.CharField(required=False)
-    contributors = forms.CharField(widget=forms.Textarea)
-    time = forms.NumberInput()
-    reference = forms.URLField(required=False)
-    publish = forms.BooleanField()
+    #run = forms.FileField(help_text="Any additional files to keep with survey") # deactivating for now
+    cognitive_atlas_task_id = forms.CharField(required=False,
+                                              help_text="""A <a href='http://www.cognitiveatlas.org' target='_blank'>
+                                                           cognitive atlas</a> task unique id (e.g., trm_*) to link to
+                                                           additional meta-data about the assessment.""")
+    contributors = forms.CharField(widget=forms.Textarea,help_text="Comma separated list of contributors.")
+    time = forms.IntegerField(help_text="A recommended maximum time for the survey to be completed.")
+    reference = forms.URLField(required=False,label='reference')
+    publish = forms.BooleanField(help_text="Should the survey be active when published?")
 
     def clean(self):
         cleaned_data = super(SurveyForm, self).clean()
