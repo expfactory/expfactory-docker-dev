@@ -59,7 +59,7 @@ class SurveyForm(forms.Form):
                                                            cognitive atlas</a> task unique id (e.g., trm_*) to link to
                                                            additional meta-data about the assessment.""")
     contributors = forms.CharField(widget=forms.Textarea,help_text="Comma separated list of contributors.")
-    time = forms.IntegerField(help_text="A recommended maximum time for the survey to be completed.")
+    time = forms.IntegerField(help_text="A recommended maximum time (minutes) for the survey to be completed.",initial=30)
     reference = forms.URLField(required=False,label='reference')
     publish = forms.BooleanField(help_text="Publish the survey when saved?")
 
