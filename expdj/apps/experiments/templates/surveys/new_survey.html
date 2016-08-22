@@ -9,8 +9,18 @@
 
 <h2 style="margin-bottom:30px">New Survey: {{ battery.name }}</h2>
 
+{% if form.errors %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-info" role="alert">Please complete all form inputs.</div>
+    </div>
+</div>
+{% endif %}
+
 <form enctype="multipart/form-data" method="post" action="{% url 'new_survey' battery.id %}">
+{% csrf_token %}
 {{ form.as_p }}
+<input type="submit" name="submit"></input>
 </form>
 
 

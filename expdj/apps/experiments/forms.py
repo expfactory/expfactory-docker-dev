@@ -61,7 +61,7 @@ class SurveyForm(forms.Form):
     contributors = forms.CharField(widget=forms.Textarea,help_text="Comma separated list of contributors.")
     time = forms.IntegerField(help_text="A recommended maximum time for the survey to be completed.")
     reference = forms.URLField(required=False,label='reference')
-    publish = forms.BooleanField(help_text="Should the survey be active when published?")
+    publish = forms.BooleanField(help_text="Publish the survey when saved?")
 
     def clean(self):
         cleaned_data = super(SurveyForm, self).clean()

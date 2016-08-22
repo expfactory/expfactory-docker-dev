@@ -188,11 +188,10 @@ def new_survey(request,bid):
     context = {"battery":battery}
 
     if request.method == "POST":
-        form = SurveyForm(request.POST)
-        if form.is_valid():
-            print("valid")    
+        context["form"] = SurveyForm(request.POST)
+        if context["form"].is_valid():
             # upload the new survey, creating a config.json
-            pickle.dump(form,open('form.pkl','wb'))
+            print("valid")        
     else:
         form = SurveyForm()
         context["form"] = form
