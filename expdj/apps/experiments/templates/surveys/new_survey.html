@@ -28,9 +28,14 @@
 </style>
 <script type="text/javascript">
     window.Questions = window.Questions || {};
-    window.Questions.data = {{ questions | safe }};
-    window.Questions.headers = {{ data_headers | safe }};
-    window.Questions.datasources = {{ datasources | safe }};
+    window.Questions.data = [ ["", "Ford", "Volvo", "Toyota", "Honda"],
+                              ["2016", 10, 11, 12, 13],
+                              ["2017", 20, 11, 14, 13],
+                              ["2018", 30, 15, 12, 13]
+                            ];
+//{{ questions | safe }};
+//    window.Questions.headers = {{ data_headers | safe }};
+//    window.Questions.datasources = {{ datasources | safe }};
 </script>
 <link rel="stylesheet" href="{% static "css/select2.min.css" %}" />
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
