@@ -1,5 +1,6 @@
 from expdj.apps.experiments.models import Experiment, Battery
 from expdj.apps.api.utils import get_experiment_selection
+from expdj.apps.result.utils import save_json
 from expdj.settings import (
    STATIC_ROOT,BASE_DIR,MEDIA_ROOT,MEDIA_URL,REPLY_TO, DOMAIN_NAME
 )
@@ -30,6 +31,35 @@ EXPERIMENT_ROOT = "%s/experiments" %(media_dir)
 if not os.path.exists(EXPERIMENT_ROOT):
     os.mkdir(EXPERIMENT_ROOT)
 
+# SURVEYS #################################################################################
+
+def generate_new_survey(install_dir,exp_id,lookup=None,update=True):
+    '''generate_new_survey will use the survey template to generate a new survey (with config.json) in
+    the install_dir. If the folder already exists, the files will be replaced given that update=True (default)
+    :param install_dir: the base installation directory, should already exist
+    :param exp_id: the exp_id, the unique id for the survey
+    :param update: Replace or update the files, if the survey already exists (default is True)
+    :param lookup: (not required) a dictionary of values to look up for the config.json
+    '''
+    survey_exists = True
+    install_folder = '%s/%s' %(install_dir,exp_id)
+    if not os.path.exists(install_folder):
+        survey_exists = False
+        os.mkdir(install_folder)
+ 
+    # Names must have quotes
+    if "contributors" in lookup:
+        if len(lookup['contributors']) > 0:
+            lookup['contributors'] = ",".join(['"%s"' %(n) for n in lookup["contributors"].split(',')])
+
+    # Read in the template files for config.json
+    template = get_template("surveys/new_survey/config.json.template")
+    lookup["exp_id"] = exp_id
+    config = template.render(context=lookup)
+    save_json(config,"%s/config.json" %(install_folder))
+
+    # Write out the question file
+    #TODO:
 
 # EXPERIMENT FACTORY PYTHON FUNCTIONS #####################################################
 
