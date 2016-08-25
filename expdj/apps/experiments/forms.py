@@ -52,13 +52,12 @@ class SurveyForm(forms.Form):
     notes = forms.CharField(widget=forms.Textarea,
                             help_text="Any additional or important notes about the survey.")
 
-    # This will need to be external required files, along with defaults
-    #run = forms.FileField(help_text="Any additional files to keep with survey") # deactivating for now
+    questions = forms.FileField(help_text='A valid survey.tsv file with questions, see <a href="https://github.com/expfactory/surveys">details</a> about this format.') 
     cognitive_atlas_task_id = forms.CharField(required=False,
                                               help_text="""A <a href='http://www.cognitiveatlas.org' target='_blank'>
                                                            cognitive atlas</a> task unique id (e.g., trm_*) to link to
                                                            additional meta-data about the assessment.""")
-    contributors = forms.CharField(widget=forms.Textarea,help_text="Comma separated list of contributors.")
+    contributors = forms.CharField(label="contributors",max_length=500,help_text="Comma separated list of contributors.")
     time = forms.IntegerField(help_text="A recommended maximum time (minutes) for the survey to be completed.",initial=30)
     reference = forms.URLField(required=False,label='reference')
     publish = forms.BooleanField(help_text="Publish the survey when saved?")

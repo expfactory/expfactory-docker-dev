@@ -29,7 +29,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect, csrf_exempt
 
 from expdj.apps.experiments.utils import (
-    install_experiments, select_experiments
+    install_experiments, select_experiments, generate_new_survey
 )
 from expdj.apps.main.views import google_auth_view
 from expdj.apps.experiments.forms import (
@@ -188,16 +188,18 @@ def new_survey(request,bid):
     context = {"battery":battery}
 
     if request.method == "POST":
-        context["form"] = SurveyForm(request.POST)
+        context["form"] = SurveyForm(request.POST,request.FILES)
         if context["form"].is_valid():
+            file_handle = request.FILES["questions"]
             exp_id = context["form"].cleaned_data['name'].replace(" ","_").lower()
-            lookup=form.cleaned_data
+            lookup=context["form"].cleaned_data
             # Ensure that isn't over-writing a current exp_id
             if exp_id not in [e.exp_id for e in battery.experiment_set.all()]:
                 # upload the new survey, creating a config.json
                 generate_new_survey(exp_id=exp_id,
                                     install_dir=battery.get_install_dir(),
-                                    lookup=form.cleaned_data)
+                                    lookup=lookup,
+                                    questions=file_handle)
 
                 print("valid")        
             else:

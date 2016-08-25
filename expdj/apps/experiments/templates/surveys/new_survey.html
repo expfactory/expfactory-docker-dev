@@ -3,42 +3,7 @@
 {% load crispy_forms_tags %}
 {% block head %}
 
-<!-- Handsontable -->
-<link rel="stylesheet" media="screen" href="{% static "css/handsontable.full.min.css"%}">
-<style>
-    .errors {
-        display: none;
-    }
-
-    .btn-save-metadata {
-        margin-bottom: 20px;
-    }
-
-    .hot-wrapper {
-        min-height: 400px;
-    }
-
-    #hot {
-        overflow: auto;
-    }
-
-    .row-error:not(:first-child) {
-        margin-top: 15px;
-    }
-</style>
-<script type="text/javascript">
-    window.Questions = window.Questions || {};
-    window.Questions.data = [ ["", "Ford", "Volvo", "Toyota", "Honda"],
-                              ["2016", 10, 11, 12, 13],
-                              ["2017", 20, 11, 14, 13],
-                              ["2018", 30, 15, 12, 13]
-                            ];
-//{{ questions | safe }};
-//    window.Questions.headers = {{ data_headers | safe }};
-//    window.Questions.datasources = {{ datasources | safe }};
-</script>
 <link rel="stylesheet" href="{% static "css/select2.min.css" %}" />
-<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 {% endblock %}
 {% block content %}
 
@@ -62,55 +27,11 @@
 </div>
 {% endif %}
 
-
 <form enctype="multipart/form-data" method="post" action="{% url 'new_survey' battery.id %}">
 {% csrf_token %}
 {{ form.as_p }}
 <input type="submit" name="submit"></input>
 </form>
-
-<!-- Add column modal (do we need this?)-->
-<div class="modal fade" id="columnNameModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Insert New Column</h4>
-      </div>
-      <form class="js-name-form">
-        <div class="modal-body">
-          <div class="form-group js-input-wrapper">
-            <label class="control-label" for="column-name"></label>
-            <input type="text" placeholder="Enter a new column name" class="form-control" id="column-name">
-            <span class="help-block"></span>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Column</button>
-        </div>
-      </form>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-<!-- Handsontable (HOT) -->
-<div class="row">
-    <div class="col-md-12">
-        <button class="btn btn-primary pull-right btn-save-metadata">Save</button>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-12 ">
-        <div class="alert alert-danger errors"></div>
-    </div>
-</div>
-
-<div class="row hot-wrapper">
-    <div class="col-md-12">
-        <div id="hot" class="handsontable"></div>
-    </div>
-</div>
 
 {% endblock %}
 {% block scripts %}
@@ -148,7 +69,4 @@ $(document).ready(function() {
 </script>
 <script src="{% static "js/select2.min.js"%}" type="text/javascript"></script>
 <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-<script src="{% static "js/handsontable.full.min.js"%}" type="text/javascript"></script>
-<script src="{% static "js/questions-common.js"%}" type="text/javascript"></script>
-<script src="{% static "js/questions-edit.js"%}" type="text/javascript"></script>
 {% endblock %}

@@ -1,6 +1,6 @@
 [
     {
-        "name": "{{ name }}",
+        "name": "{{ name  }}",
         "template":"survey",
         "run": [
                  "https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en",
@@ -16,12 +16,12 @@
                  "https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.12.0/jquery.validate.min.js"
                ],
         "exp_id": "{{exp_id}}",
-        "cognitive_atlas_task_id": "{{ cognitive_atlas_task_id }}",
-        "contributors": [{{ contributors }}], 
+        "cognitive_atlas_task_id": "{{ cognitive_atlas_task_id | safe }}",
+        "contributors": [{{ contributors | safe }}], 
         "time":{{ time }},
         "experiment_variables": "",
-        "reference": "{{ reference }}",
-        "notes": "{{ notes }}",
+        "reference": "{{ reference | safe  }}",
+        "notes": "{{ notes | safe }}",
         "publish":"{{ publish }}",
         "deployment_variables":{"material_design":
                                {"fullscreen": true}

@@ -246,12 +246,11 @@
     var container = document.getElementById('hot'),
       hot = new Handsontable(container, {
         data: window.Questions.data,
-        //colHeaders: headerNames(window.Questions.headers),
+        colHeaders: headerNames(window.Questions.headers),
         //columns: columnSettings(window.Questions.headers),
         //columnSorting: true,
         //sortIndicator: true,
         rowHeaders: true,
-        colHeaders:true,
         //height: getDefaultHeight(window.Questions.data),
         //allowInsertRow: false,
         //minSpareRows: 0,

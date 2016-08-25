@@ -7,6 +7,7 @@ from expdj.settings import (
 from expfactory.experiment import get_experiments,load_experiment
 from expfactory.survey import export_questions, generate_survey
 from expfactory.utils import copy_directory
+from expfactory.tests import validate_surveys
 
 from django.db.models import Min
 from django.template import Context, Template
@@ -26,6 +27,7 @@ import shutil
 import tempfile
 
 media_dir = os.path.join(BASE_DIR,MEDIA_ROOT)
+survey_template = os.path.join(BASE_DIR,"expdj/apps/experiments/templates/surveys/new_survey")
 
 EXPERIMENT_ROOT = "%s/experiments" %(media_dir)
 if not os.path.exists(EXPERIMENT_ROOT):
@@ -33,33 +35,64 @@ if not os.path.exists(EXPERIMENT_ROOT):
 
 # SURVEYS #################################################################################
 
-def generate_new_survey(install_dir,exp_id,lookup=None,update=True):
+def generate_new_survey(install_dir,exp_id,questions,lookup=None,update=True):
     '''generate_new_survey will use the survey template to generate a new survey (with config.json) in
     the install_dir. If the folder already exists, the files will be replaced given that update=True (default)
     :param install_dir: the base installation directory, should already exist
     :param exp_id: the exp_id, the unique id for the survey
+    :param questions: the file handle for the questions
     :param update: Replace or update the files, if the survey already exists (default is True)
     :param lookup: (not required) a dictionary of values to look up for the config.json
     '''
-    survey_exists = True
-    install_folder = '%s/%s' %(install_dir,exp_id)
-    if not os.path.exists(install_folder):
-        survey_exists = False
-        os.mkdir(install_folder)
- 
+    # First install to temporary directory
+    tmpdir = tempfile.mkdtemp()    
+
+    # Copy the survey template to the folder (all required files)
+    needs_validation = "%s/%s" %(tmpdir,exp_id)
+    copy_directory(survey_template,needs_validation)
+
+    # Write the questions there
+    with open('%s/survey.tsv' %(needs_validation),'wb+') as destination:
+        for chunk in questions.chunks():
+            destination.write(chunk)
+
     # Names must have quotes
     if "contributors" in lookup:
         if len(lookup['contributors']) > 0:
             lookup['contributors'] = ",".join(['"%s"' %(n) for n in lookup["contributors"].split(',')])
 
+    # Remove weird /M carriage returns
+    if "notes" in lookup:
+        if len(lookup["notes"]) > 0:
+            lookup['notes'] = '\n'.join(lookup['notes'].split(r'\r'))
+
     # Read in the template files for config.json
     template = get_template("surveys/new_survey/config.json.template")
     lookup["exp_id"] = exp_id
+    del lookup['questions']
     config = template.render(context=lookup)
-    save_json(config,"%s/config.json" %(install_folder))
+    write_template(config.encode('utf-8'),"%s/config.json" %(needs_validation))
+    os.remove("%s/config.json.template" %(needs_validation))
 
-    # Write out the question file
-    #TODO:
+    # Finally, validate the survey. If valid, add to database. Otherwise, remove
+    valid = validate_surveys([exp_id],tmpdir,survey_file="survey.tsv",delim="\t")
+
+    if valid == True:
+        install_folder = '%s/%s' %(install_dir,exp_id)
+        if update == True:
+            if os.path.exists(install_folder):
+                shutil.rmtree(install_folder)
+        else:    
+            if os.path.exists(install_folder):
+                return False
+
+        # Copy the survey template to the folder (all required files)
+        copy_directory(needs_validation,install_folder)
+
+    else:
+        return False
+
+
 
 # EXPERIMENT FACTORY PYTHON FUNCTIONS #####################################################
 
