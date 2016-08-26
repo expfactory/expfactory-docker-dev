@@ -106,6 +106,7 @@ def experiments_view(request):
 
 def preview_experiment(request,eid):
     experiment = get_experiment(eid,request)
+    request.session['no_send'] = "anything"
     return HttpResponseRedirect(experiment.serve_url())
 
 
