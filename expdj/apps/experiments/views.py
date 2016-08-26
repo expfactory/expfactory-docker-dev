@@ -196,10 +196,16 @@ def new_survey(request,bid):
             # Ensure that isn't over-writing a current exp_id
             if exp_id not in [e.exp_id for e in battery.experiment_set.all()]:
                 # upload the new survey, creating a config.json
-                generate_new_survey(exp_id=exp_id,
-                                    battery=battery,
-                                    lookup=lookup,
-                                    questions=file_handle)
+                result = generate_new_survey(exp_id=exp_id,
+                                            battery=battery,
+                                            lookup=lookup,
+                                            questions=file_handle)
+                # If there is an error, result will not be True
+                if result != True:
+                    context["message"] = """Error with install: %s""" %(result)
+                else: # No error, redirect the user to batteries page
+                    return HttpResponseRedirect(battery.get_absolute_url())
+
             else:
                 context["message"] = """An experiment or survey with the exp_id 
                                         %s already exists! Please re-name your survey

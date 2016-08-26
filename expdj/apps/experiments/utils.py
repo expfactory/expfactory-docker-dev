@@ -81,16 +81,8 @@ def generate_new_survey(battery,exp_id,questions,lookup=None,update=True):
     valid = validate_surveys([exp_id],tmpdir,survey_file="survey.tsv",delim="\t")
 
     if valid == True:
-        install_folder = '%s/%s' %(install_dir,exp_id)
-        if update == True:
-            if os.path.exists(install_folder):
-                shutil.rmtree(install_folder)
-        else:    
-            if os.path.exists(install_folder):
-                return False
 
-        # Copy the survey template to the folder (all required files)
-        copy_directory(needs_validation,install_folder)
+        install_folder = '%s/%s' %(install_dir,exp_id)
 
         # The version will be the datetime string
         version = datetime.now().strftime("%s")
@@ -103,6 +95,16 @@ def generate_new_survey(battery,exp_id,questions,lookup=None,update=True):
                                                                          "version":version,
                                                                          "template":"survey"})
         new_experiment.save()
+
+        success = install_experiment_static(experiment=new_experiment,
+                                            to_dir=install_folder,
+                                            from_dir=needs_validation,
+                                            version=version,
+                                            update=update)
+
+        if success != True:
+            # If success returns as not true, is a mesage to indicate error
+            valid = "%s: %s" (exp_id,success)
 
     shutil.rmtree(tmpdir)
     return valid
