@@ -20,6 +20,8 @@
                         <ul class="dropdown-menu" aria-labelledby="preview_menu">
                             <li><a class='btn-default btn-lg' target="_blank" href='{% url 'preview_battery' battery.id %}'>Send Data</a></li>
                             <li><a class='btn-default btn-lg' target="_blank" href='{% url 'preview_battery' battery.id 0 %}'>Don't Send Data</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a class='btn-default btn-lg' href='{% url 'reset_preview' battery.id %}'>Reset Preview</a></li>
                         </ul>
                     </span>
                 {% endif %}

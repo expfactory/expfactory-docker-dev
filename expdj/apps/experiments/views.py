@@ -331,6 +331,49 @@ def enable_cookie_view(request):
     return render_to_response("experiments/cookie_sorry.html")
 
 
+# Preview ----------------------------------------------------------------------
+def preview_battery(request,bid,no_send=None):
+
+    # No robots allowed!
+    if request.user_agent.is_bot:
+        return render_to_response("messages/robot_sorry.html")
+
+    battery = get_battery(bid,request)
+    router_url = battery.get_router_url()
+
+    # If the user has already started and authenticated
+    worker = get_worker("DUMMY",create=True)
+    request.session['worker_id'] = "DUMMY"
+   
+    # If no_send is defined, the user doesn't want to email results
+    if no_send != None:
+       request.session['no_send'] = "anything"
+
+    # We set the userid in the template to send to the service worker before routing to battery
+    context = {"instruction_forms":get_battery_intro(battery),
+               "start_url":router_url,
+               "userid":"DUMMY"}
+
+    return render(request, "batteries/serve_battery_intro.html", context)
+
+def reset_preview(request,bid,redirect=True):
+    '''reset_preview will delete the battery experiments for the preview user, meaning
+    the preview can be restarted
+    :param bid: the battery id
+    :param redirect: if True, will redirect back to battery page, with message of reset
+    (default is True, should only be false if called by server)
+    '''
+    preview_user = get_worker("DUMMY")
+    battery = get_battery(bid,request)
+    experiments = battery.experiment_set.all()
+    preview_user.experiments_completed = preview_user.experiments_completed.exclude(id__in=[x.id for x in experiments])
+    preview_user.save()
+    if redirect == True:
+        message = "Dummy worker history successfully reset."
+        return view_battery(request,battery.id,message=message)
+    
+
+# Serving ----------------------------------------------------------------------
 def get_battery_intro(battery,show_advertisement=True):
 
     instruction_forms = []
@@ -341,7 +384,6 @@ def get_battery_intro(battery,show_advertisement=True):
     if battery.consent != None: instruction_forms.append({"title":"Consent","html":battery.consent})
     if battery.instructions != None: instruction_forms.append({"title":"Instructions","html":battery.instructions})
     return instruction_forms
-
 
 def serve_battery_anon(request,bid,keyid):
     '''serve an anonymous local battery, userid is generated upon going to link
@@ -385,31 +427,6 @@ def serve_battery_gmail(request,bid):
         return render_to_response("messages/robot_sorry.html")
 
 
-def preview_battery(request,bid,no_send=None):
-
-    # No robots allowed!
-    if request.user_agent.is_bot:
-        return render_to_response("messages/robot_sorry.html")
-
-    battery = get_battery(bid,request)
-    router_url = battery.get_router_url()
-
-    # If the user has already started and authenticated
-    worker = get_worker("DUMMY",create=True)
-    request.session['worker_id'] = "DUMMY"
-   
-    # If no_send is defined, the user doesn't want to email results
-    if no_send != None:
-       request.session['no_send'] = "anything"
-
-    # We set the userid in the template to send to the service worker before routing to battery
-    context = {"instruction_forms":get_battery_intro(battery),
-               "start_url":router_url,
-               "userid":"DUMMY"}
-
-    return render(request, "batteries/serve_battery_intro.html", context)
-
-
 def intro_battery(request,bid,userid=None):
     '''intro_battery is where the user can read the instructions, advertisement, etc.,
     and choose to start the battery (or not)
@@ -442,29 +459,29 @@ def intro_battery(request,bid,userid=None):
 
 # Route the user to the next experiment
 @csrf_exempt
-def battery_router(request,bid,eid=None,userid=None,send_result=True):
+def battery_router(request,bid,eid=None,userid=None,no_send=False):
     '''battery_router will direct the user (determined from the session variable) to an uncompleted experiment. If an
     experiment id is provided, the redirect is being sent from a completed experiment, and we log the experiment as completed
     first. 
     :param bid: the battery id
     :param eid: the experiment id, if provided, means we are submitting a result
     :param userid: the userid, will be "DUMMY" if doing a battery preview
-    :param send_result: send result to email, default is True
+    :param no_send: don't send result to email, default is False
     '''
     # No robots allowed!
     if request.user_agent.is_bot:
         return render_to_response("messages/robot_sorry.html")
 
     # Is this a valid user?
-    if userid != "DUMMY": # preview battery
+    preview = False
+    if userid != "DUMMY": # not a preview battery
         userid = request.session.get('worker_id', None)
         if userid == None:
             return render_to_response("messages/invalid_id_sorry.html")
     else:
         # If no_send is defined, then don't send
-        no_send = request.session.get('send_result', None)
-        if no_send != None:
-            send_result = False
+        preview = True
+        no_send = request.session.get('no_send', False)
     
     worker = get_worker(userid)
 
@@ -485,7 +502,7 @@ def battery_router(request,bid,eid=None,userid=None,send_result=True):
         if experiment not in worker.experiments_completed.all():
 
             # Only send data if the user hasn't completed it yet
-            if send_result == True:
+            if no_send != True:
                 send_result.apply_async([experiment.id,worker.id,data])
             worker.experiments_completed.add(experiment)
             worker.save()
@@ -508,6 +525,9 @@ def battery_router(request,bid,eid=None,userid=None,send_result=True):
     uncompleted_experiments = get_worker_experiments(worker,battery)
     experiments_left = len(uncompleted_experiments)
     if experiments_left == 0:
+        # If it's a preview, reset it before showing the final page
+        if preview == True:
+            reset_preview(request,bid,redirect=False)
         # Thank you for your participation - no more experiments!
         return render_to_response("messages/worker_sorry.html")
 
