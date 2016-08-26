@@ -53,11 +53,6 @@ media_dir = os.path.join(BASE_DIR,MEDIA_ROOT)
 
 ### AUTHENTICATION ####################################################
 
-def check_experiment_edit_permission(request):
-    if request.user.is_superuser:
-        return True
-    return False
-
 def check_battery_create_permission(request):
     if not request.user.is_anonymous():
         if request.user.is_superuser:
@@ -228,7 +223,7 @@ def change_experiment_order(request,bid,eid):
     '''
     experiment = get_experiment(eid,request)
     battery = get_battery(bid,request)
-    can_edit = check_experiment_edit_permission(request)
+    can_edit = check_battery_edit_permission(request,battery)
     if request.method == "POST":
         if can_edit:
             if "order" in request.POST:
@@ -358,7 +353,6 @@ def serve_battery_anon(request,bid,keyid):
     if uid == keyid:
 
         # If the user has already started and authenticated
-        # NEED TO CHECK THIS WITH PICKLE - not sure why they chose False
         userid = request.session.get('worker_id', None)
         if userid == None:
             userid = uuid.uuid4()
@@ -391,20 +385,29 @@ def serve_battery_gmail(request,bid):
         return render_to_response("messages/robot_sorry.html")
 
 
-def preview_battery(request,bid):
+def preview_battery(request,bid,no_send=None):
 
     # No robots allowed!
     if request.user_agent.is_bot:
         return render_to_response("messages/robot_sorry.html")
 
-    if request.user_agent.is_pc:
+    battery = get_battery(bid,request)
+    router_url = battery.get_router_url()
 
-        battery = get_battery(bid,request)
-        context = {"instruction_forms":get_battery_intro(battery),
-                   "start_url":"/batteries/%s/dummy" %(bid),
-                   "assignment_id":"assenav tahcos"}
+    # If the user has already started and authenticated
+    worker = get_worker("DUMMY",create=True)
+    request.session['worker_id'] = "DUMMY"
+   
+    # If no_send is defined, the user doesn't want to email results
+    if no_send != None:
+       request.session['no_send'] = "anything"
 
-        return render(request, "experiments/serve_battery_intro.html", context)
+    # We set the userid in the template to send to the service worker before routing to battery
+    context = {"instruction_forms":get_battery_intro(battery),
+               "start_url":router_url,
+               "userid":"DUMMY"}
+
+    return render(request, "batteries/serve_battery_intro.html", context)
 
 
 def intro_battery(request,bid,userid=None):
@@ -437,48 +440,32 @@ def intro_battery(request,bid,userid=None):
         return render(request, "batteries/serve_battery_intro.html", context)
 
 
-@login_required
-def dummy_battery(request,bid):
-    '''dummy_battery lets the user run a faux battery (preview)'''
-
-    battery = get_battery(bid,request)
-    deployment = "docker-local"
-
-    # Does the worker have experiments remaining?
-    task_list = select_experiments(battery,uncompleted_experiments=battery.experiments.all())
-    experimentTemplate = ExperimentTemplate.objects.filter(exp_id=task_list[0].template.exp_id)[0]
-    experiment_type = get_experiment_type(experimentTemplate)
-    task_list = battery.experiments.filter(template=experimentTemplate)
-    result = None
-    context = {"worker_id": "Dummy Worker"}
-    if experiment_type in ["games","surveys"]:
-        template = "%s/serve_battery_preview.html" %(experiment_type)
-    else:
-        template = "%s/serve_battery.html" %(experiment_type)
-
-    return deploy_battery(deployment="docker-preview",
-                          battery=battery,
-                          experiment_type=experiment_type,
-                          context=context,
-                          task_list=task_list,
-                          template=template,
-                          result=result)
-
 # Route the user to the next experiment
 @csrf_exempt
-def battery_router(request,bid,eid=None):
+def battery_router(request,bid,eid=None,userid=None,send_result=True):
     '''battery_router will direct the user (determined from the session variable) to an uncompleted experiment. If an
     experiment id is provided, the redirect is being sent from a completed experiment, and we log the experiment as completed
     first. 
+    :param bid: the battery id
+    :param eid: the experiment id, if provided, means we are submitting a result
+    :param userid: the userid, will be "DUMMY" if doing a battery preview
+    :param send_result: send result to email, default is True
     '''
     # No robots allowed!
     if request.user_agent.is_bot:
         return render_to_response("messages/robot_sorry.html")
 
     # Is this a valid user?
-    userid = request.session.get('worker_id', None)
-    if userid == None:
-        return render_to_response("messages/invalid_id_sorry.html")
+    if userid != "DUMMY": # preview battery
+        userid = request.session.get('worker_id', None)
+        if userid == None:
+            return render_to_response("messages/invalid_id_sorry.html")
+    else:
+        # If no_send is defined, then don't send
+        no_send = request.session.get('send_result', None)
+        if no_send != None:
+            send_result = False
+    
     worker = get_worker(userid)
 
     # Retrieve the battery based on the bid
@@ -498,7 +485,8 @@ def battery_router(request,bid,eid=None):
         if experiment not in worker.experiments_completed.all():
 
             # Only send data if the user hasn't completed it yet
-            send_result.apply_async([experiment.id,worker.id,data])
+            if send_result == True:
+                send_result.apply_async([experiment.id,worker.id,data])
             worker.experiments_completed.add(experiment)
             worker.save()
 

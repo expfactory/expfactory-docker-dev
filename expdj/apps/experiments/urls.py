@@ -33,8 +33,8 @@ urlpatterns = patterns('',
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/delete$',expv.delete_battery,name='delete_battery'),
 
     # Deployment Options
-    url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/preview$',expv.preview_battery,name='preview_battery'), # intro preview without subid
-    url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/dummy$',expv.dummy_battery,name='dummy_battery'),       # running without subid
+    url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/(?P<no_send>\d+|[A-Z]{8})/preview$',expv.preview_battery,name='preview_battery'), # intro preview, don't send result
+    url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/preview$',expv.preview_battery,name='preview_battery'), # intro preview, send result
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/(?P<userid>\d+|[A-Za-z0-9-]{30,36})/serve$',expv.intro_battery,name='intro_battery'),
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/(?P<keyid>\d+|[A-Za-z0-9-]{32})/anon$',expv.serve_battery_anon,name='serve_battery_anon'),
     url(r'^batteries/(?P<bid>\d+|[A-Z]{8})/serve/gmail$',expv.serve_battery_gmail,name='serve_battery_gmail'),

@@ -12,7 +12,16 @@
             {% if edit_permission %}
                 <a class='btn-default btn-lg' href='{% url 'edit_battery' battery.id %}'>Edit Battery</a>
                 {% if experiments %}
-                <a class='btn-default btn-lg' target="_blank" href='{% url 'preview_battery' battery.id %}'>Preview</a>
+                    <span class="dropdown">
+                        <button class="btn-default btn-lg dropdown-toggle" type="button" id="preview_menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Preview
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="preview_menu">
+                            <li><a class='btn-default btn-lg' target="_blank" href='{% url 'preview_battery' battery.id %}'>Send Data</a></li>
+                            <li><a class='btn-default btn-lg' target="_blank" href='{% url 'preview_battery' battery.id 0 %}'>Don't Send Data</a></li>
+                        </ul>
+                    </span>
                 {% endif %}
 
                     {% if experiments %}
@@ -130,6 +139,9 @@
                        {% endif %}
                        {% if experiment.template = "phaser" %}
                        game
+                       {% endif %}
+                       {% if experiment.template = "custom" %}
+                       custom
                        {% endif %}
                    </td>
                    <td>
