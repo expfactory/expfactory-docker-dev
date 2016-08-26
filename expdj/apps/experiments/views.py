@@ -105,13 +105,8 @@ def experiments_view(request):
 # Preview and Serving ----------------------------------------------------------
 
 def preview_experiment(request,eid):
-    experiment = get_experiment_template(eid,request)
-    experiment_type = get_experiment_type(experiment)
-    experiment_folder = os.path.join(media_dir,experiment_type,experiment.exp_id)
-    template = '%s/%s_preview.html' %(experiment_type,experiment_type[:-1])
-    experiment_html = embed_experiment(experiment_folder,url_prefix="/")
-    context = {"preview_html":experiment_html}
-    return render_to_response(template, context)
+    experiment = get_experiment(eid,request)
+    return HttpResponseRedirect(experiment.serve_url())
 
 
 # Experiments ----------------------------------------------------------
