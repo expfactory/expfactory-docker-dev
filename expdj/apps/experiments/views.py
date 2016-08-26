@@ -192,16 +192,14 @@ def new_survey(request,bid):
         if context["form"].is_valid():
             file_handle = request.FILES["questions"]
             exp_id = context["form"].cleaned_data['name'].replace(" ","_").lower()
-            lookup=context["form"].cleaned_data
+            lookup = context["form"].cleaned_data
             # Ensure that isn't over-writing a current exp_id
             if exp_id not in [e.exp_id for e in battery.experiment_set.all()]:
                 # upload the new survey, creating a config.json
                 generate_new_survey(exp_id=exp_id,
-                                    install_dir=battery.get_install_dir(),
+                                    battery=battery,
                                     lookup=lookup,
                                     questions=file_handle)
-
-                print("valid")        
             else:
                 context["message"] = """An experiment or survey with the exp_id 
                                         %s already exists! Please re-name your survey

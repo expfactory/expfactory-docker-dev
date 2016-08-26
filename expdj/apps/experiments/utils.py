@@ -35,10 +35,10 @@ if not os.path.exists(EXPERIMENT_ROOT):
 
 # SURVEYS #################################################################################
 
-def generate_new_survey(install_dir,exp_id,questions,lookup=None,update=True):
+def generate_new_survey(battery,exp_id,questions,lookup=None,update=True):
     '''generate_new_survey will use the survey template to generate a new survey (with config.json) in
     the install_dir. If the folder already exists, the files will be replaced given that update=True (default)
-    :param install_dir: the base installation directory, should already exist
+    :param battery: the battery to install the experiment to.
     :param exp_id: the exp_id, the unique id for the survey
     :param questions: the file handle for the questions
     :param update: Replace or update the files, if the survey already exists (default is True)
@@ -46,6 +46,9 @@ def generate_new_survey(install_dir,exp_id,questions,lookup=None,update=True):
     '''
     # First install to temporary directory
     tmpdir = tempfile.mkdtemp()    
+ 
+    # What is the battery install_dir?
+    install_dir = battery.get_install_dir()
 
     # Copy the survey template to the folder (all required files)
     needs_validation = "%s/%s" %(tmpdir,exp_id)
@@ -64,7 +67,7 @@ def generate_new_survey(install_dir,exp_id,questions,lookup=None,update=True):
     # Remove weird /M carriage returns
     if "notes" in lookup:
         if len(lookup["notes"]) > 0:
-            lookup['notes'] = '\n'.join(lookup['notes'].split(r'\r'))
+            lookup['notes'] = ''.join(lookup['notes'].replace('\r\n', ''))
 
     # Read in the template files for config.json
     template = get_template("surveys/new_survey/config.json.template")
@@ -74,7 +77,7 @@ def generate_new_survey(install_dir,exp_id,questions,lookup=None,update=True):
     write_template(config.encode('utf-8'),"%s/config.json" %(needs_validation))
     os.remove("%s/config.json.template" %(needs_validation))
 
-    # Finally, validate the survey. If valid, add to database. Otherwise, remove
+    # Finally, validate the survey. If valid, add to database.
     valid = validate_surveys([exp_id],tmpdir,survey_file="survey.tsv",delim="\t")
 
     if valid == True:
@@ -89,9 +92,20 @@ def generate_new_survey(install_dir,exp_id,questions,lookup=None,update=True):
         # Copy the survey template to the folder (all required files)
         copy_directory(needs_validation,install_folder)
 
-    else:
-        return False
+        # The version will be the datetime string
+        version = datetime.now().strftime("%s")
 
+        # Install the folder as a new experiment!
+        new_experiment,_ = Experiment.objects.update_or_create(exp_id=exp_id,battery=battery,
+                                                               defaults={"name":lookup["name"],
+                                                                         "time":lookup["time"],
+                                                                         "reference":lookup["reference"],
+                                                                         "version":version,
+                                                                         "template":"survey"})
+        new_experiment.save()
+
+    shutil.rmtree(tmpdir)
+    return valid
 
 
 # EXPERIMENT FACTORY PYTHON FUNCTIONS #####################################################
