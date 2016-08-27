@@ -32,7 +32,7 @@ def view_battery(request,bid=None):
     '''
     # A single battery ID returns associated experiments as well
     if bid != None:
-        battery = [get_battery(request,bid)]
+        battery = [get_battery(bid,request)]
         if len(battery) > 0:
             battery = json.loads(serializers.serialize("json",battery,fields=('pk','description','add_date','modify_date','name')))
             experiments = Experiment.objects.filter(battery__id=bid)
@@ -48,8 +48,26 @@ def view_battery(request,bid=None):
 
     # No bid means return all public batteries information
     else:
-
         results = Battery.objects.filter(private=False)
-        results = serializers.serialize("json", results,fields=('pk','description','add_date','modify_date','name'))
+        results = json.loads(serializers.serialize("json", results,fields=('pk','description','add_date','modify_date','name')))
         count = len(results)
         return JsonResponse({"results":results,"count":count})
+
+
+def view_experiment(request,eid=None):
+    '''view_experiment will return a JSON response for one or more experiments
+    This will eventually need pagination added.
+    '''
+    # Return a single experiment
+    if eid != None:
+        experiments = [get_experiment(eid,request)]
+        if len(experiments) == 0:
+            return JsonResponse({"results":[],"count":0,"message":"Experiment not found."}) 
+
+    # No eid means return all public experiments
+    else:
+        experiments = Experiment.objects.filter(battery__private=False)
+    count = len(experiments)
+    experiments = json.loads(serializers.serialize("json",experiments,fields=('pk','name','exp_id','version','template',
+                                                                              'time','battery','reference','order')))
+    return JsonResponse({"results":experiments,"count":count})
