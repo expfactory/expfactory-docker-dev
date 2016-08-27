@@ -75,9 +75,6 @@ INSTALLED_APPS = (
     'dbbackup',
     'djcelery',
     'django_gravatar',
-    'rest_framework',
-    'rest_framework.authtoken',
-     #'opbeat.contrib.django',
 )
 
 
@@ -213,21 +210,6 @@ CELERY_IMPORTS = ('expdj.apps.result.tasks', )
 #}
 
 CELERY_TIMEZONE = 'Europe/Berlin'
-
-# REST FRAMEWORK
-REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissions',
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-    ),
-    'PAGE_SIZE':10,
-}
 
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False

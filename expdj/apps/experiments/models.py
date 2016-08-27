@@ -119,7 +119,7 @@ class Experiment(models.Model):
     template = models.CharField(max_length=100,null=True,blank=False)
     order = models.IntegerField(help_text="Order for experiment presentation. Smaller numbers will be selected first, and equivalent numbers will be chosen from randomly.", null=False, default=1,verbose_name="Experiment order", blank=False)
     version = models.CharField(max_length=100,null=True,blank=False)
-    battery = models.ForeignKey(Battery,null=False,blank=False)
+    battery = models.ForeignKey(Battery,null=False,blank=False,related_name='experiment_set')
 
     def __meta__(self):
         ordering = ["name"]

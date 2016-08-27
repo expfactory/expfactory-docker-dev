@@ -6,7 +6,6 @@ decorator==4.0.2
 django-guardian
 django-crispy-forms
 django-extensions
-djangorestframework
 django-filter
 django-taggit
 django-taggit-templatetags

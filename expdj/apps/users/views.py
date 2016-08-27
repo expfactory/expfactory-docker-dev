@@ -10,7 +10,6 @@ from django.contrib import auth
 from .forms import UserEditForm, UserCreateForm
 from django.contrib.auth.decorators import login_required
 from django.template.context import RequestContext
-from rest_framework import status
 
 def to_json_response(response):
     status_code = response.status_code

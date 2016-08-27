@@ -122,7 +122,8 @@ def get_experiment_type(experiment):
         return "surveys"
     elif experiment.template in ["phaser"]:
         return "games"
-
+    else:
+        return "custom"
 
 def parse_experiment_variable(variable):
     experiment_variable = None

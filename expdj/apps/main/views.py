@@ -2,7 +2,6 @@ from django.views.decorators.csrf import requires_csrf_token
 from django.contrib.auth.decorators import login_required
 from django.db.models.aggregates import Count
 from django.template import RequestContext
-from rest_framework.authtoken.models import Token
 from django.shortcuts import render, render_to_response
 from expdj.apps.experiments.models import Battery
 import hashlib
@@ -36,14 +35,6 @@ def google_auth_view(request,bid,keyid):
         return render_to_response("main/google_auth.html",context,context_instance=RequestContext(request))
     else:
         return render_to_response("turk/robot_sorry.html")
-
-@login_required
-def get_token(request):
-    context = {'active':'home'}
-    if request.user.is_authenticated:
-        token,created = Token.objects.get_or_create(user=request.user)
-        context["token"] = token.key
-    return render(request, 'main/token.html', context)
 
 
 # Error Pages ##################################################################

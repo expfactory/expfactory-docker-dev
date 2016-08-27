@@ -112,6 +112,12 @@ def preview_experiment(request,eid):
 
 # Experiments ----------------------------------------------------------
 
+def view_experiment(request,eid):
+    experiment = get_experiment(eid,request)
+    context = {"experiment":experiment}
+    return render(request,'experiments/experiment_details.html', context)
+
+
 @login_required
 def edit_experiment(request,bid,eid):
     '''edit_experiment
