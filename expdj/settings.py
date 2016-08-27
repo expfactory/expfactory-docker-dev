@@ -126,7 +126,8 @@ TEMPLATES = [
                                             "django.core.context_processors.static",
                                             "django.core.context_processors.tz",
                                             "django.contrib.messages.context_processors.messages",
-                                            'django.core.context_processors.request'),
+                                            'django.core.context_processors.request',
+                                            'expdj.apps.main.context_processors.domain_processor'), #custom context processor
                     'loaders': ('django.template.loaders.filesystem.Loader',
                                 'django.template.loaders.app_directories.Loader',
                                 )},

@@ -4,7 +4,6 @@ from django.db.models.aggregates import Count
 from django.template import RequestContext
 from django.shortcuts import render, render_to_response
 from expdj.apps.experiments.models import Battery, Experiment
-from expdj.settings import DOMAIN_NAME
 import hashlib
 
 def index_view(request):
@@ -28,8 +27,7 @@ def api_view(request):
     battery = Battery.objects.order_by('?').first()
     experiment = Experiment.objects.order_by('?').first()
 
-    context = {"domain":DOMAIN_NAME,
-               "experiment":experiment,
+    context = {"experiment":experiment,
                "battery":battery}
 
     return render(request, 'routes/api.html',context)

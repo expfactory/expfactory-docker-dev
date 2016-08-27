@@ -1,0 +1,12 @@
+<meta name="name" content="{{ experiment.name | safe }}">
+{% if experiment.description %}
+<meta name="description" content="{{ experiment.description | safe }}">
+{% endif %}
+<meta name="battery" content="{{ experiment.battery.name | safe }}">
+<meta name="battery_id" content="{{ experiment.battery.id }}">
+<meta name="url" content="{{ domain }}{{ experiment.get_absolute_url | safe }}">
+<meta name="version" content="{{ experiment.version }}">
+<meta name="database" content="expfactory.org">
+{% if experiment.battery.private %}
+<meta name="robots" content="noindex">
+{% endif %}

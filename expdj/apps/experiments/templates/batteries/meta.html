@@ -1,0 +1,11 @@
+<meta name="name" content="{{ battery.name | safe }}">
+{% if battery.description %}
+<meta name="description" content="{{ battery.description | safe }}">
+{% endif %}
+<meta name="experiments" content="{{ battery.experiment_set.count }}">
+<meta name="url" content="{{ domain }}{{ battery.get_absolute_url | safe }}">
+<meta name="add_date" content="{{ battery.add_date | safe }}">
+<meta name="database" content="expfactory.org">
+{% if battery.private %}
+<meta name="robots" content="noindex">
+{% endif %}
