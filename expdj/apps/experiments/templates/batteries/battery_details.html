@@ -116,7 +116,7 @@
            <tbody>
            {% for experiment in experiments %}
                <tr>
-                   <td><a href="#">{{ experiment.name }}</a></td>
+                   <td><a href="{% url 'experiment_details' experiment.id %}">{{ experiment.name }}</a></td>
                    <!-- Experiment Order-->
                    <td>
                      {% if edit_permission %}
