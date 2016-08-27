@@ -1,0 +1,28 @@
+{% extends "main/base.html" %}
+{% block head %}
+{% endblock %}
+{% load staticfiles %}
+
+{% block content %}
+<div id="block-measurements" class="block-back" style="padding-top:30px; padding-bottom:30px; margin-top:50px">
+    <em>The Experiment Factory RESTful API</em> provides programmatic access to public experiments and batteries. You can use this interface to explore the data, or the <a href="http://expanalysis.readthedocs.io/" target="_blank">expanalysis</a> python module.
+    <div class="panes">
+        <div class="pane">
+            <div>
+             <strong>Batteries</strong> <a href="{% url 'api_batteries' %}" target="_blank">{{ domain }}/api/battery</a>
+            </div>
+            <div>
+             <strong>Single Battery</strong> <a href="{% url 'api_battery' battery.id %}" target="_blank">{{ domain }}/api/battery/{{ battery.id }}</a>
+            </div>
+            <div>
+             <strong>Experiments</strong> <a href="{% url 'api_experiments' %}" target="_blank">{{ domain }}/api/experiment</a>
+            </div>
+            <div>
+             <strong>Single Experiment</strong> <a href="{% url 'api_experiment' experiment.id %}" target="_blank">{{ domain }}/api/experiment/{{ experiment.id }}</a>
+            </div>
+        </div> 
+    </div>
+</div>     
+{% endblock %}
+{% block scripts %}
+{% endblock %}
