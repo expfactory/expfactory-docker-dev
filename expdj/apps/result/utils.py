@@ -60,11 +60,10 @@ def generate_email(battery,experiment,worker,data):
     body = "Experiment Factory Result Data\n%s\n%s\n%s" %(battery.flat(),
                                                           experiment.flat(),
                                                           worker.flat())
-    filename = "%s_%s_%s.json" %(experiment.exp_id,experiment.id,worker.id)
-
+    body = "%s\n<pre>%s</pre>" %(body,data)
+    
     return  {"personalizations": [{"to": [{"email": to_email}],
              "subject": subject}],
-             'attachments': [{'content': data,'type': 'application/json','filename': filename}],
              "from": {"email": REPLY_TO},
              "content": [{"type": "text/plain","value": body}]}
 
