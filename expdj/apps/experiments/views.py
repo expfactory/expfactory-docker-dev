@@ -496,9 +496,11 @@ def battery_router(request,bid,eid=None,userid=None,no_send=False):
         experiment = get_experiment(eid,request)
    
         # If it's a survey, format the results before sending
+        data = request.POST
+
         if experiment.template == "survey":
-            data = request.POST
             data = complete_survey_result(experiment,data)
+            pickle.dump(data,open('data.pkl','w'))
         
         # Mark the experiment as completed    
         if experiment not in worker.experiments_completed.all():

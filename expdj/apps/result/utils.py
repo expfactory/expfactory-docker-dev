@@ -47,7 +47,7 @@ def get_time_difference(d1,d2,format='%Y-%m-%d %H:%M:%S'):
 
 
 def generate_email(battery,experiment,worker,data):
-    '''send_result will use sendgrid API to send a result object to a user as an email attachment.
+    '''generate_email will use sendgrid API to send a result object to a user as an email attachment.
     :param battery: The expdj.apps.experiment.Battery
     :param data: the data result (json) to send
     '''
