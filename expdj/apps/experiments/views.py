@@ -500,8 +500,10 @@ def battery_router(request,bid,eid=None,userid=None,no_send=False):
 
         if experiment.template == "survey":
             data = complete_survey_result(experiment,data)
-            pickle.dump(data,open('data.pkl','w'))
         
+        else:
+            data = dict(data)
+
         # Mark the experiment as completed    
         if experiment not in worker.experiments_completed.all():
 
